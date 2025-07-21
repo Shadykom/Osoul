@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Calendar, TrendingUp, Users, DollarSign, FileText, Building, Activity, Download, Filter, Globe, CreditCard, Target, Award, Clock, ChevronRight, Menu, X, Bell, AlertCircle, Shield, BarChart2, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Calendar, TrendingUp, Users, DollarSign, FileText, Building, Activity, Download, Filter, Globe, CreditCard, Target, Award, Clock, ChevronRight, ChevronLeft, Menu, X, Bell, AlertCircle, Shield, BarChart2, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import osoulLogo from './assets/osoul-logo.png';
 
 const OsoulReportingSystem = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -373,7 +374,7 @@ const OsoulReportingSystem = () => {
   };
 
   const NotificationPanel = () => (
-    <div className={`fixed right-4 top-20 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 transition-all duration-300 ${
+    <div className={`fixed ${language === 'ar' ? 'left-4' : 'right-4'} top-20 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 transition-all duration-300 ${
       showNotifications ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
     }`}>
       <div className="p-4 border-b border-gray-200">
@@ -409,17 +410,19 @@ const OsoulReportingSystem = () => {
   );
 
   const Sidebar = () => (
-    <div className={`fixed left-0 top-0 h-full bg-gradient-to-b from-gray-800 to-gray-700 text-white transition-all duration-300 z-40 ${
+    <div className={`fixed ${language === 'ar' ? 'right-0' : 'left-0'} top-0 h-full bg-gradient-to-b from-gray-800 to-gray-700 text-white transition-all duration-300 z-40 ${
       sidebarOpen ? 'w-64' : 'w-20'
     }`}>
       <div className="p-6">
         <div className="flex items-center justify-between mb-8">
           <div className={`flex items-center ${sidebarOpen ? '' : 'justify-center'}`}>
-            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1">
-              <div className="w-full h-full bg-yellow-500 rounded"></div>
-            </div>
+            <img 
+              src={osoulLogo} 
+              alt="Osoul Logo" 
+              className="w-12 h-12 object-contain bg-white rounded-lg p-1"
+            />
             {sidebarOpen && (
-              <div className="ml-3">
+              <div className={language === 'ar' ? 'mr-3' : 'ml-3'}>
                 <h1 className="text-xl font-bold">Osoul Modern</h1>
                 <p className="text-yellow-200 text-xs">أصول الحديثة</p>
               </div>
@@ -458,7 +461,7 @@ const OsoulReportingSystem = () => {
               }`}
             >
               <item.icon size={20} />
-              {sidebarOpen && <span className="ml-3">{item.label}</span>}
+              {sidebarOpen && <span className={language === 'ar' ? 'mr-3' : 'ml-3'}>{item.label}</span>}
             </button>
           ))}
         </nav>
@@ -470,14 +473,21 @@ const OsoulReportingSystem = () => {
     <div className="min-h-screen bg-gray-50" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <Sidebar />
       
-      <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
+      <div className={`${language === 'ar' ? (sidebarOpen ? 'mr-64' : 'mr-20') : (sidebarOpen ? 'ml-64' : 'ml-20')} transition-all duration-300`}>
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">{t.title}</h1>
-                <p className="text-gray-500 text-sm">{t.subtitle}</p>
+              <div className="flex items-center gap-4">
+                <img 
+                  src={osoulLogo} 
+                  alt="Osoul Logo" 
+                  className="h-12 w-auto"
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">{t.title}</h1>
+                  <p className="text-gray-500 text-sm">{t.subtitle}</p>
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <select
@@ -505,7 +515,7 @@ const OsoulReportingSystem = () => {
                   className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <Bell size={20} />
-                  <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  <span className={`absolute top-0 ${language === 'ar' ? 'left-0' : 'right-0'} w-3 h-3 bg-red-500 rounded-full animate-pulse`} />
                 </button>
                 <button
                   onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
@@ -712,7 +722,7 @@ const OsoulReportingSystem = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">{t.branchPerformance}</h3>
                   <button className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-                    Detailed Analysis <ChevronRight size={16} />
+                    Detailed Analysis {language === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
                   </button>
                 </div>
                 <ResponsiveContainer width="100%" height={300}>
@@ -1818,7 +1828,7 @@ const OsoulReportingSystem = () => {
                         </button>
                         <button className="px-4 py-2 bg-yellow-500 text-gray-800 rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2 font-semibold">
                           Generate
-                          <ChevronRight size={16} />
+                          {language === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
                         </button>
                       </div>
                     </div>
