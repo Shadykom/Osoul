@@ -130,8 +130,11 @@ const OsoulReportingSystem = () => {
       expenses: 'Expenses',
       netProfit: 'Net Profit',
       targetAchieved: 'Target Achieved',
+      samaReports: 'SAMA Reports',
+      samaReportsDesc: 'Saudi Central Bank regulatory and prudential supervision reports',
       prudentialReports: 'Prudential Reports',
       prudentialReportsDesc: 'Regulatory and risk management reports for prudential supervision',
+      regulatoryCompliance: 'Regulatory Compliance Reports',
       standardReports: 'Standard Reports',
       standardReportsDesc: 'Regular operational and business reports',
       preview: 'Preview',
@@ -216,8 +219,11 @@ const OsoulReportingSystem = () => {
       expenses: 'المصروفات',
       netProfit: 'صافي الربح',
       targetAchieved: 'الهدف المحقق',
+      samaReports: 'تقارير ساما',
+      samaReportsDesc: 'تقارير البنك المركزي السعودي التنظيمية والرقابة الاحترازية',
       prudentialReports: 'التقارير الاحترازية',
       prudentialReportsDesc: 'تقارير تنظيمية وإدارة المخاطر للرقابة الاحترازية',
+      regulatoryCompliance: 'تقارير الامتثال التنظيمي',
       standardReports: 'التقارير القياسية',
       standardReportsDesc: 'تقارير تشغيلية وأعمال منتظمة',
       preview: 'معاينة',
@@ -1810,13 +1816,15 @@ const OsoulReportingSystem = () => {
 
           {activeTab === 'reports' && (
             <div className="space-y-6">
-              {/* Prudential Reports Section */}
+              {/* SAMA Reports Section */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800">{t.prudentialReports}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{t.prudentialReportsDesc}</p>
+                  <h3 className="text-lg font-semibold text-gray-800">{t.samaReports || 'SAMA Reports'}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{t.samaReportsDesc || 'Saudi Central Bank regulatory and prudential supervision reports'}</p>
                 </div>
-                <div className="divide-y divide-gray-200">
+                <div className="p-6 pt-0">
+                  <h4 className="text-md font-semibold text-gray-700 mb-4 px-6 pt-6">{t.prudentialReports}</h4>
+                  <div className="divide-y divide-gray-200 border rounded-lg">
                   {[
                     { 
                       name: 'Capital Adequacy Report (CAR)', 
@@ -1913,6 +1921,76 @@ const OsoulReportingSystem = () => {
                       </div>
                     </div>
                   ))}
+                  </div>
+                  
+                  {/* Regulatory Compliance Reports */}
+                  <h4 className="text-md font-semibold text-gray-700 mb-4 px-6 pt-6">{t.regulatoryCompliance || 'Regulatory Compliance Reports'}</h4>
+                  <div className="divide-y divide-gray-200 border rounded-lg mb-6">
+                    {[
+                      { 
+                        name: 'SAMA Monthly Statistical Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Monthly', 
+                        lastGenerated: '31 Dec 2024',
+                        description: 'Comprehensive statistical data submission to SAMA',
+                        example: 'Total Assets: SAR 45.2B, Total Deposits: SAR 38.7B, Total Financing: SAR 32.1B'
+                      },
+                      { 
+                        name: 'Anti-Money Laundering (AML) Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Quarterly', 
+                        lastGenerated: '31 Dec 2024',
+                        description: 'Suspicious transaction reports and AML compliance metrics',
+                        example: 'STRs Filed: 23, High-Risk Accounts: 145, Enhanced Due Diligence: 89'
+                      },
+                      { 
+                        name: 'Consumer Protection Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Quarterly', 
+                        lastGenerated: '31 Dec 2024',
+                        description: 'Customer complaints, resolutions, and service quality metrics',
+                        example: 'Total Complaints: 234, Resolved: 98.2%, Avg Resolution Time: 3.2 days'
+                      },
+                      { 
+                        name: 'Cyber Security Incident Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Monthly', 
+                        lastGenerated: '20 Jan 2025',
+                        description: 'Security incidents, vulnerabilities, and remediation actions',
+                        example: 'Incidents: 12, Critical: 0, High: 2, Medium: 4, Low: 6, Patched: 100%'
+                      }
+                    ].map((report, index) => (
+                      <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-800">{report.name}</h4>
+                            <p className="text-sm text-gray-600 mt-1">{report.description}</p>
+                            <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                              <p className="text-xs font-mono text-gray-700">{t.example}: {report.example}</p>
+                            </div>
+                            <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                              <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                {report.type}
+                              </span>
+                              <span>•</span>
+                              <span>{report.frequency}</span>
+                              <span>•</span>
+                              <span>{t.lastGenerated}: {report.lastGenerated}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <button className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                              {t.preview}
+                            </button>
+                            <button className="px-4 py-2 bg-yellow-500 text-gray-800 rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2 font-semibold">
+                              {t.generate}
+                              {language === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
