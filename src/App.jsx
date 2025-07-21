@@ -129,7 +129,25 @@ const OsoulReportingSystem = () => {
       revenue: 'Revenue',
       expenses: 'Expenses',
       netProfit: 'Net Profit',
-      targetAchieved: 'Target Achieved'
+      targetAchieved: 'Target Achieved',
+      samaReports: 'SAMA Reports',
+      samaReportsDesc: 'Saudi Central Bank regulatory and prudential supervision reports',
+      prudentialReports: 'Prudential Reports',
+      prudentialReportsDesc: 'Regulatory and risk management reports for prudential supervision',
+      regulatoryCompliance: 'Regulatory Compliance Reports',
+      standardReports: 'Standard Reports',
+      standardReportsDesc: 'Regular operational and business reports',
+      preview: 'Preview',
+      generate: 'Generate',
+      schedule: 'Schedule',
+      example: 'Example',
+      description: 'Description',
+      frequency: 'Frequency',
+      lastGenerated: 'Last Generated',
+      daily: 'Daily',
+      weekly: 'Weekly',
+      semiAnnual: 'Semi-Annual',
+      annual: 'Annual'
     },
     ar: {
       title: 'نظام تقارير أصول الحديثة',
@@ -200,7 +218,25 @@ const OsoulReportingSystem = () => {
       revenue: 'الإيرادات',
       expenses: 'المصروفات',
       netProfit: 'صافي الربح',
-      targetAchieved: 'الهدف المحقق'
+      targetAchieved: 'الهدف المحقق',
+      samaReports: 'تقارير ساما',
+      samaReportsDesc: 'تقارير البنك المركزي السعودي التنظيمية والرقابة الاحترازية',
+      prudentialReports: 'التقارير الاحترازية',
+      prudentialReportsDesc: 'تقارير تنظيمية وإدارة المخاطر للرقابة الاحترازية',
+      regulatoryCompliance: 'تقارير الامتثال التنظيمي',
+      standardReports: 'التقارير القياسية',
+      standardReportsDesc: 'تقارير تشغيلية وأعمال منتظمة',
+      preview: 'معاينة',
+      generate: 'إنشاء',
+      schedule: 'جدولة',
+      example: 'مثال',
+      description: 'الوصف',
+      frequency: 'التكرار',
+      lastGenerated: 'آخر إنشاء',
+      daily: 'يومي',
+      weekly: 'أسبوعي',
+      semiAnnual: 'نصف سنوي',
+      annual: 'سنوي'
     }
   };
 
@@ -1780,9 +1816,189 @@ const OsoulReportingSystem = () => {
 
           {activeTab === 'reports' && (
             <div className="space-y-6">
+              {/* SAMA Reports Section */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold">Available Reports</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">{t.samaReports || 'SAMA Reports'}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{t.samaReportsDesc || 'Saudi Central Bank regulatory and prudential supervision reports'}</p>
+                </div>
+                <div className="p-6 pt-0">
+                  <h4 className="text-md font-semibold text-gray-700 mb-4 px-6 pt-6">{t.prudentialReports}</h4>
+                  <div className="divide-y divide-gray-200 border rounded-lg">
+                  {[
+                    { 
+                      name: 'Capital Adequacy Report (CAR)', 
+                      type: 'Prudential', 
+                      frequency: 'Quarterly', 
+                      lastGenerated: '31 Dec 2024',
+                      description: 'Tier 1 & Tier 2 capital ratios, risk-weighted assets, leverage ratio',
+                      example: 'CAR: 15.2%, Tier 1: 12.8%, CET1: 11.5%, Leverage: 8.3%'
+                    },
+                    { 
+                      name: 'Liquidity Coverage Ratio (LCR)', 
+                      type: 'Prudential', 
+                      frequency: 'Monthly', 
+                      lastGenerated: '31 Dec 2024',
+                      description: 'High-quality liquid assets vs net cash outflows over 30 days',
+                      example: 'LCR: 142%, HQLA: SAR 2.4B, Net Outflows: SAR 1.69B'
+                    },
+                    { 
+                      name: 'Net Stable Funding Ratio (NSFR)', 
+                      type: 'Prudential', 
+                      frequency: 'Quarterly', 
+                      lastGenerated: '31 Dec 2024',
+                      description: 'Available stable funding vs required stable funding',
+                      example: 'NSFR: 118%, ASF: SAR 8.2B, RSF: SAR 6.95B'
+                    },
+                    { 
+                      name: 'Large Exposure Report', 
+                      type: 'Prudential', 
+                      frequency: 'Monthly', 
+                      lastGenerated: '20 Jan 2025',
+                      description: 'Exposures exceeding 10% of eligible capital base',
+                      example: 'Top 5 exposures: 18.2% (Group A), 14.5% (Group B), 12.1% (Group C)'
+                    },
+                    { 
+                      name: 'Stress Testing Report', 
+                      type: 'Prudential', 
+                      frequency: 'Semi-Annual', 
+                      lastGenerated: '30 Jun 2024',
+                      description: 'Impact analysis under adverse economic scenarios',
+                      example: 'Baseline CAR: 15.2%, Adverse: 11.8%, Severe: 9.5%'
+                    },
+                    { 
+                      name: 'ICAAP Report', 
+                      type: 'Prudential', 
+                      frequency: 'Annual', 
+                      lastGenerated: '31 Dec 2024',
+                      description: 'Internal Capital Adequacy Assessment Process',
+                      example: 'Economic Capital: SAR 4.2B, Regulatory Capital: SAR 4.8B, Buffer: 14.3%'
+                    },
+                    { 
+                      name: 'Asset Quality Report', 
+                      type: 'Prudential', 
+                      frequency: 'Monthly', 
+                      lastGenerated: '20 Jan 2025',
+                      description: 'NPL ratios, provision coverage, asset classification',
+                      example: 'NPL Ratio: 2.1%, Coverage: 185%, Stage 2: 4.3%, Stage 3: 2.1%'
+                    },
+                    { 
+                      name: 'Market Risk Report', 
+                      type: 'Prudential', 
+                      frequency: 'Daily', 
+                      lastGenerated: '20 Jan 2025',
+                      description: 'VaR, stressed VaR, IRC, trading book positions',
+                      example: 'VaR: SAR 12.5M, SVaR: SAR 28.3M, IRC: SAR 8.7M'
+                    }
+                  ].map((report, index) => (
+                    <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800">{report.name}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{report.description}</p>
+                          <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                            <p className="text-xs font-mono text-gray-700">{t.example}: {report.example}</p>
+                          </div>
+                          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                            <span className="px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">
+                              {report.type}
+                            </span>
+                            <span>•</span>
+                            <span>{report.frequency}</span>
+                            <span>•</span>
+                            <span>{t.lastGenerated}: {report.lastGenerated}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <button className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                            {t.preview}
+                          </button>
+                          <button className="px-4 py-2 bg-yellow-500 text-gray-800 rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2 font-semibold">
+                            {t.generate}
+                            {language === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  </div>
+                  
+                  {/* Regulatory Compliance Reports */}
+                  <h4 className="text-md font-semibold text-gray-700 mb-4 px-6 pt-6">{t.regulatoryCompliance || 'Regulatory Compliance Reports'}</h4>
+                  <div className="divide-y divide-gray-200 border rounded-lg mb-6">
+                    {[
+                      { 
+                        name: 'SAMA Monthly Statistical Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Monthly', 
+                        lastGenerated: '31 Dec 2024',
+                        description: 'Comprehensive statistical data submission to SAMA',
+                        example: 'Total Assets: SAR 45.2B, Total Deposits: SAR 38.7B, Total Financing: SAR 32.1B'
+                      },
+                      { 
+                        name: 'Anti-Money Laundering (AML) Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Quarterly', 
+                        lastGenerated: '31 Dec 2024',
+                        description: 'Suspicious transaction reports and AML compliance metrics',
+                        example: 'STRs Filed: 23, High-Risk Accounts: 145, Enhanced Due Diligence: 89'
+                      },
+                      { 
+                        name: 'Consumer Protection Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Quarterly', 
+                        lastGenerated: '31 Dec 2024',
+                        description: 'Customer complaints, resolutions, and service quality metrics',
+                        example: 'Total Complaints: 234, Resolved: 98.2%, Avg Resolution Time: 3.2 days'
+                      },
+                      { 
+                        name: 'Cyber Security Incident Report', 
+                        type: 'Regulatory', 
+                        frequency: 'Monthly', 
+                        lastGenerated: '20 Jan 2025',
+                        description: 'Security incidents, vulnerabilities, and remediation actions',
+                        example: 'Incidents: 12, Critical: 0, High: 2, Medium: 4, Low: 6, Patched: 100%'
+                      }
+                    ].map((report, index) => (
+                      <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-800">{report.name}</h4>
+                            <p className="text-sm text-gray-600 mt-1">{report.description}</p>
+                            <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                              <p className="text-xs font-mono text-gray-700">{t.example}: {report.example}</p>
+                            </div>
+                            <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                              <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                                {report.type}
+                              </span>
+                              <span>•</span>
+                              <span>{report.frequency}</span>
+                              <span>•</span>
+                              <span>{t.lastGenerated}: {report.lastGenerated}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <button className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                              {t.preview}
+                            </button>
+                            <button className="px-4 py-2 bg-yellow-500 text-gray-800 rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2 font-semibold">
+                              {t.generate}
+                              {language === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Standard Reports Section */}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold">{t.standardReports}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{t.standardReportsDesc}</p>
                 </div>
                 <div className="divide-y divide-gray-200">
                   {[
@@ -1811,15 +2027,15 @@ const OsoulReportingSystem = () => {
                           <span>•</span>
                           <span>{report.frequency}</span>
                           <span>•</span>
-                          <span>Last: {report.lastGenerated}</span>
+                          <span>{t.lastGenerated}: {report.lastGenerated}</span>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <button className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                          Schedule
+                          {t.schedule}
                         </button>
                         <button className="px-4 py-2 bg-yellow-500 text-gray-800 rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2 font-semibold">
-                          Generate
+                          {t.generate}
                           {language === 'ar' ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
                         </button>
                       </div>
