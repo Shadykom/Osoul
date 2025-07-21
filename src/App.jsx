@@ -148,14 +148,19 @@ const OsoulReportingSystem = () => {
       weekly: 'Weekly',
       semiAnnual: 'Semi-Annual',
       annual: 'Annual',
-      heatMapAnalytics: 'Heat Map Analytics',
-      heatMapAnalyticsDesc: 'Visual representation of report generation patterns and system usage',
-      reportGenerationHeatMap: 'Report Generation Heat Map',
-      systemUsageHeatMap: 'System Usage Heat Map',
-      peakHours: 'Peak Hours',
-      lowActivity: 'Low Activity',
-      mediumActivity: 'Medium Activity',
-      highActivity: 'High Activity',
+          heatMapAnalytics: 'Heat Map Analytics',
+    heatMapAnalyticsDesc: 'Visual representation of report generation patterns and system usage',
+        customerBehaviorHeatMap: 'Customer Behavior Heat Map',
+    customerBehaviorDesc: 'Analysis of customer activity patterns across different channels and time periods',
+    transactionVolume: 'Transaction Volume',
+    channelUsage: 'Channel Usage',
+    peakActivity: 'Peak Activity',
+    reportGenerationHeatMap: 'Report Generation Heat Map',
+    systemUsageHeatMap: 'System Usage Heat Map',
+    peakHours: 'Peak Hours',
+    lowActivity: 'Low Activity',
+    mediumActivity: 'Medium Activity',
+    highActivity: 'High Activity',
       hourlyActivity: 'Hourly Activity Pattern',
       weeklyPattern: 'Weekly Pattern'
     },
@@ -247,14 +252,19 @@ const OsoulReportingSystem = () => {
       weekly: 'أسبوعي',
       semiAnnual: 'نصف سنوي',
       annual: 'سنوي',
-      heatMapAnalytics: 'تحليلات الخريطة الحرارية',
-      heatMapAnalyticsDesc: 'تمثيل مرئي لأنماط إنشاء التقارير واستخدام النظام',
-      reportGenerationHeatMap: 'خريطة حرارية لإنشاء التقارير',
-      systemUsageHeatMap: 'خريطة حرارية لاستخدام النظام',
-      peakHours: 'ساعات الذروة',
-      lowActivity: 'نشاط منخفض',
-      mediumActivity: 'نشاط متوسط',
-      highActivity: 'نشاط مرتفع',
+          heatMapAnalytics: 'تحليلات الخريطة الحرارية',
+    heatMapAnalyticsDesc: 'تمثيل مرئي لأنماط إنشاء التقارير واستخدام النظام',
+        customerBehaviorHeatMap: 'خريطة حرارية لسلوك العملاء',
+    customerBehaviorDesc: 'تحليل أنماط نشاط العملاء عبر القنوات المختلفة والفترات الزمنية',
+    transactionVolume: 'حجم المعاملات',
+    channelUsage: 'استخدام القنوات',
+    peakActivity: 'ذروة النشاط',
+    reportGenerationHeatMap: 'خريطة حرارية لإنشاء التقارير',
+    systemUsageHeatMap: 'خريطة حرارية لاستخدام النظام',
+    peakHours: 'ساعات الذروة',
+    lowActivity: 'نشاط منخفض',
+    mediumActivity: 'نشاط متوسط',
+    highActivity: 'نشاط مرتفع',
       hourlyActivity: 'نمط النشاط بالساعة',
       weeklyPattern: 'النمط الأسبوعي'
     }
@@ -432,6 +442,42 @@ const OsoulReportingSystem = () => {
         { day: 'Fri', reports: 125, analytics: 280, dataEntry: 240, exports: 85 },
         { day: 'Sat', reports: 45, analytics: 120, dataEntry: 80, exports: 25 },
         { day: 'Sun', reports: 65, analytics: 180, dataEntry: 120, exports: 38 }
+      ]
+    },
+    customerBehavior: {
+      hourly: [
+        { hour: '12AM', mobile: 45, web: 12, branch: 0, atm: 25 },
+        { hour: '1AM', mobile: 32, web: 8, branch: 0, atm: 18 },
+        { hour: '2AM', mobile: 28, web: 5, branch: 0, atm: 15 },
+        { hour: '3AM', mobile: 25, web: 4, branch: 0, atm: 12 },
+        { hour: '4AM', mobile: 22, web: 3, branch: 0, atm: 10 },
+        { hour: '5AM', mobile: 30, web: 8, branch: 0, atm: 20 },
+        { hour: '6AM', mobile: 85, web: 25, branch: 0, atm: 45 },
+        { hour: '7AM', mobile: 125, web: 45, branch: 0, atm: 65 },
+        { hour: '8AM', mobile: 185, web: 85, branch: 20, atm: 95 },
+        { hour: '9AM', mobile: 225, web: 125, branch: 85, atm: 115 },
+        { hour: '10AM', mobile: 285, web: 165, branch: 125, atm: 135 },
+        { hour: '11AM', mobile: 325, web: 185, branch: 145, atm: 155 },
+        { hour: '12PM', mobile: 295, web: 165, branch: 165, atm: 175 },
+        { hour: '1PM', mobile: 265, web: 145, branch: 135, atm: 165 },
+        { hour: '2PM', mobile: 285, web: 155, branch: 155, atm: 145 },
+        { hour: '3PM', mobile: 305, web: 175, branch: 175, atm: 135 },
+        { hour: '4PM', mobile: 325, web: 195, branch: 195, atm: 125 },
+        { hour: '5PM', mobile: 345, web: 215, branch: 185, atm: 115 },
+        { hour: '6PM', mobile: 285, web: 185, branch: 45, atm: 105 },
+        { hour: '7PM', mobile: 225, web: 155, branch: 0, atm: 95 },
+        { hour: '8PM', mobile: 185, web: 125, branch: 0, atm: 85 },
+        { hour: '9PM', mobile: 145, web: 95, branch: 0, atm: 75 },
+        { hour: '10PM', mobile: 105, web: 65, branch: 0, atm: 65 },
+        { hour: '11PM', mobile: 65, web: 35, branch: 0, atm: 45 }
+      ],
+      transactionTypes: [
+        { type: 'Transfer', morning: 1250, afternoon: 1850, evening: 950, night: 350 },
+        { type: 'Payment', morning: 850, afternoon: 1250, evening: 1450, night: 450 },
+        { type: 'Withdrawal', morning: 650, afternoon: 950, evening: 750, night: 250 },
+        { type: 'Deposit', morning: 450, afternoon: 650, evening: 350, night: 150 },
+        { type: 'Bill Payment', morning: 550, afternoon: 850, evening: 1150, night: 550 },
+        { type: 'Investment', morning: 350, afternoon: 550, evening: 250, night: 50 }
       ]
     }
   };
@@ -2268,6 +2314,134 @@ const OsoulReportingSystem = () => {
                           <p className="text-2xl font-bold text-gray-800">582</p>
                           <p className="text-sm text-gray-600">File Exports</p>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Behavior Heat Map */}
+                  <div className="mt-8">
+                    <h4 className="text-md font-semibold text-gray-700 mb-4">{t.customerBehaviorHeatMap}</h4>
+                    <p className="text-sm text-gray-600 mb-4">{t.customerBehaviorDesc}</p>
+                    
+                    {/* Channel Usage by Hour */}
+                    <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3">{t.channelUsage} - Hourly Distribution</h5>
+                      <ResponsiveContainer width="100%" height={350}>
+                        <AreaChart data={heatMapData.customerBehavior.hourly}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="hour" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Area type="monotone" dataKey="mobile" stackId="1" stroke="#4F46E5" fill="#818CF8" name="Mobile Banking" />
+                          <Area type="monotone" dataKey="web" stackId="1" stroke="#059669" fill="#34D399" name="Web Banking" />
+                          <Area type="monotone" dataKey="branch" stackId="1" stroke="#DC2626" fill="#F87171" name="Branch" />
+                          <Area type="monotone" dataKey="atm" stackId="1" stroke="#D97706" fill="#FCD34D" name="ATM" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="bg-white p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-3 h-3 bg-indigo-400 rounded"></div>
+                            <span className="font-medium">Mobile Banking</span>
+                          </div>
+                          <p className="text-gray-600">{t.peakActivity}: 5PM-6PM</p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-3 h-3 bg-green-400 rounded"></div>
+                            <span className="font-medium">Web Banking</span>
+                          </div>
+                          <p className="text-gray-600">{t.peakActivity}: 4PM-5PM</p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-3 h-3 bg-red-400 rounded"></div>
+                            <span className="font-medium">Branch</span>
+                          </div>
+                          <p className="text-gray-600">{t.peakActivity}: 3PM-4PM</p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-3 h-3 bg-yellow-400 rounded"></div>
+                            <span className="font-medium">ATM</span>
+                          </div>
+                          <p className="text-gray-600">{t.peakActivity}: 12PM-1PM</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Transaction Types Heat Map */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3">{t.transactionVolume} - By Time of Day</h5>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full">
+                          <thead>
+                            <tr className="text-xs text-gray-600">
+                              <th className="text-left py-2 px-3">Transaction Type</th>
+                              <th className="text-center py-2 px-3">Morning<br/>(6AM-12PM)</th>
+                              <th className="text-center py-2 px-3">Afternoon<br/>(12PM-6PM)</th>
+                              <th className="text-center py-2 px-3">Evening<br/>(6PM-12AM)</th>
+                              <th className="text-center py-2 px-3">Night<br/>(12AM-6AM)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {heatMapData.customerBehavior.transactionTypes.map((transaction, idx) => {
+                              const maxValue = Math.max(transaction.morning, transaction.afternoon, transaction.evening, transaction.night);
+                              const getIntensity = (value) => {
+                                const percentage = (value / maxValue) * 100;
+                                if (percentage < 25) return 'bg-blue-100 text-blue-900';
+                                if (percentage < 50) return 'bg-blue-300 text-blue-900';
+                                if (percentage < 75) return 'bg-blue-500 text-white';
+                                return 'bg-blue-700 text-white';
+                              };
+                              
+                              return (
+                                <tr key={idx} className="border-t border-gray-200">
+                                  <td className="py-3 px-3 font-medium text-gray-700">{transaction.type}</td>
+                                  <td className="py-3 px-3">
+                                    <div className={`text-center py-2 px-3 rounded-lg font-medium ${getIntensity(transaction.morning)}`}>
+                                      {transaction.morning.toLocaleString()}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <div className={`text-center py-2 px-3 rounded-lg font-medium ${getIntensity(transaction.afternoon)}`}>
+                                      {transaction.afternoon.toLocaleString()}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <div className={`text-center py-2 px-3 rounded-lg font-medium ${getIntensity(transaction.evening)}`}>
+                                      {transaction.evening.toLocaleString()}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <div className={`text-center py-2 px-3 rounded-lg font-medium ${getIntensity(transaction.night)}`}>
+                                      {transaction.night.toLocaleString()}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-blue-100 rounded"></div>
+                          <span className="text-gray-600">{t.lowActivity}</span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-blue-300 rounded"></div>
+                          <span className="text-gray-600">Low-Medium</span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                          <span className="text-gray-600">Medium-High</span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-blue-700 rounded"></div>
+                          <span className="text-gray-600">{t.highActivity}</span>
+                        </span>
                       </div>
                     </div>
                   </div>
