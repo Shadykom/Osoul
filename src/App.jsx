@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Calendar, TrendingUp, Users, DollarSign, FileText, Building, Activity, Download, Filter, Globe, CreditCard, Target, Award, Clock, ChevronRight, ChevronLeft, Menu, X, Bell, AlertCircle, Shield, BarChart2, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Calendar, TrendingUp, Users, DollarSign, FileText, Building, Activity, Download, Filter, Globe, Target, Award, Clock, ChevronRight, ChevronLeft, Menu, X, Bell, AlertCircle, Shield, BarChart2, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import osoulLogo from './assets/osoul-logo.png';
 
 const OsoulReportingSystem = () => {
@@ -256,7 +256,6 @@ const OsoulReportingSystem = () => {
   const digitalMetrics = [
     { channel: 'Mobile App', users: 125000, transactions: 892000, growth: 45 },
     { channel: 'Internet Banking', users: 85000, transactions: 456000, growth: 28 },
-    { channel: 'ATM', users: 165000, transactions: 1250000, growth: 12 },
     { channel: 'Branch', users: 45000, transactions: 125000, growth: -15 }
   ];
 
@@ -445,7 +444,7 @@ const OsoulReportingSystem = () => {
             { id: 'retail', icon: Users, label: t.retail },
             { id: 'wealth', icon: Award, label: t.wealth },
             { id: 'digital', icon: Globe, label: t.digital },
-            { id: 'portfolio', icon: CreditCard, label: t.portfolio },
+            { id: 'portfolio', icon: DollarSign, label: t.portfolio },
             { id: 'compliance', icon: Award, label: t.compliance },
             { id: 'customers', icon: Users, label: t.customers },
             { id: 'operations', icon: Clock, label: t.operations },
@@ -1122,12 +1121,6 @@ const OsoulReportingSystem = () => {
                   color="primary"
                 />
                 <MetricCard
-                  icon={CreditCard}
-                  label="Active Cards"
-                  value="85K"
-                  change={18.2}
-                />
-                <MetricCard
                   icon={Building}
                   label="Home Finance"
                   value="SAR 450M"
@@ -1149,8 +1142,7 @@ const OsoulReportingSystem = () => {
                   {[
                     { product: 'Home Finance', volume: 'SAR 450M', count: '2,800', growth: 25.8, nps: 72 },
                     { product: 'Auto Finance', volume: 'SAR 180M', count: '4,200', growth: 18.5, nps: 68 },
-                    { product: 'Personal Finance', volume: 'SAR 280M', count: '8,500', growth: 15.3, nps: 70 },
-                    { product: 'Credit Cards', volume: 'SAR 120M', count: '85,000', growth: 22.1, nps: 65 }
+                    { product: 'Personal Finance', volume: 'SAR 280M', count: '8,500', growth: 15.3, nps: 70 }
                   ].map((product, index) => (
                     <div key={index} className="bg-gray-50 rounded-lg p-4">
                       <h4 className="font-semibold text-gray-800 mb-3">{product.product}</h4>
