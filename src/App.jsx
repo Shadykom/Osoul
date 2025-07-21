@@ -147,7 +147,17 @@ const OsoulReportingSystem = () => {
       daily: 'Daily',
       weekly: 'Weekly',
       semiAnnual: 'Semi-Annual',
-      annual: 'Annual'
+      annual: 'Annual',
+      heatMapAnalytics: 'Heat Map Analytics',
+      heatMapAnalyticsDesc: 'Visual representation of report generation patterns and system usage',
+      reportGenerationHeatMap: 'Report Generation Heat Map',
+      systemUsageHeatMap: 'System Usage Heat Map',
+      peakHours: 'Peak Hours',
+      lowActivity: 'Low Activity',
+      mediumActivity: 'Medium Activity',
+      highActivity: 'High Activity',
+      hourlyActivity: 'Hourly Activity Pattern',
+      weeklyPattern: 'Weekly Pattern'
     },
     ar: {
       title: 'نظام تقارير أصول الحديثة',
@@ -236,7 +246,17 @@ const OsoulReportingSystem = () => {
       daily: 'يومي',
       weekly: 'أسبوعي',
       semiAnnual: 'نصف سنوي',
-      annual: 'سنوي'
+      annual: 'سنوي',
+      heatMapAnalytics: 'تحليلات الخريطة الحرارية',
+      heatMapAnalyticsDesc: 'تمثيل مرئي لأنماط إنشاء التقارير واستخدام النظام',
+      reportGenerationHeatMap: 'خريطة حرارية لإنشاء التقارير',
+      systemUsageHeatMap: 'خريطة حرارية لاستخدام النظام',
+      peakHours: 'ساعات الذروة',
+      lowActivity: 'نشاط منخفض',
+      mediumActivity: 'نشاط متوسط',
+      highActivity: 'نشاط مرتفع',
+      hourlyActivity: 'نمط النشاط بالساعة',
+      weeklyPattern: 'النمط الأسبوعي'
     }
   };
 
@@ -307,6 +327,114 @@ const OsoulReportingSystem = () => {
     { id: 3, type: 'info', message: 'New Sharia board ruling on cryptocurrency trading', time: '2 hours ago', priority: 'low' },
     { id: 4, type: 'warning', message: 'System maintenance scheduled for tonight 2-4 AM', time: '3 hours ago', priority: 'medium' }
   ];
+
+  // Heat map data for report generation patterns
+  const heatMapData = {
+    reportGeneration: [
+      { day: 'Mon', hour: '6AM', value: 20 },
+      { day: 'Mon', hour: '7AM', value: 35 },
+      { day: 'Mon', hour: '8AM', value: 65 },
+      { day: 'Mon', hour: '9AM', value: 85 },
+      { day: 'Mon', hour: '10AM', value: 95 },
+      { day: 'Mon', hour: '11AM', value: 88 },
+      { day: 'Mon', hour: '12PM', value: 45 },
+      { day: 'Mon', hour: '1PM', value: 40 },
+      { day: 'Mon', hour: '2PM', value: 75 },
+      { day: 'Mon', hour: '3PM', value: 82 },
+      { day: 'Mon', hour: '4PM', value: 78 },
+      { day: 'Mon', hour: '5PM', value: 65 },
+      { day: 'Mon', hour: '6PM', value: 35 },
+      { day: 'Tue', hour: '6AM', value: 18 },
+      { day: 'Tue', hour: '7AM', value: 32 },
+      { day: 'Tue', hour: '8AM', value: 62 },
+      { day: 'Tue', hour: '9AM', value: 88 },
+      { day: 'Tue', hour: '10AM', value: 92 },
+      { day: 'Tue', hour: '11AM', value: 85 },
+      { day: 'Tue', hour: '12PM', value: 42 },
+      { day: 'Tue', hour: '1PM', value: 38 },
+      { day: 'Tue', hour: '2PM', value: 72 },
+      { day: 'Tue', hour: '3PM', value: 80 },
+      { day: 'Tue', hour: '4PM', value: 75 },
+      { day: 'Tue', hour: '5PM', value: 62 },
+      { day: 'Tue', hour: '6PM', value: 32 },
+      { day: 'Wed', hour: '6AM', value: 22 },
+      { day: 'Wed', hour: '7AM', value: 38 },
+      { day: 'Wed', hour: '8AM', value: 68 },
+      { day: 'Wed', hour: '9AM', value: 90 },
+      { day: 'Wed', hour: '10AM', value: 98 },
+      { day: 'Wed', hour: '11AM', value: 90 },
+      { day: 'Wed', hour: '12PM', value: 48 },
+      { day: 'Wed', hour: '1PM', value: 42 },
+      { day: 'Wed', hour: '2PM', value: 78 },
+      { day: 'Wed', hour: '3PM', value: 85 },
+      { day: 'Wed', hour: '4PM', value: 80 },
+      { day: 'Wed', hour: '5PM', value: 68 },
+      { day: 'Wed', hour: '6PM', value: 38 },
+      { day: 'Thu', hour: '6AM', value: 25 },
+      { day: 'Thu', hour: '7AM', value: 40 },
+      { day: 'Thu', hour: '8AM', value: 70 },
+      { day: 'Thu', hour: '9AM', value: 92 },
+      { day: 'Thu', hour: '10AM', value: 100 },
+      { day: 'Thu', hour: '11AM', value: 92 },
+      { day: 'Thu', hour: '12PM', value: 50 },
+      { day: 'Thu', hour: '1PM', value: 45 },
+      { day: 'Thu', hour: '2PM', value: 80 },
+      { day: 'Thu', hour: '3PM', value: 88 },
+      { day: 'Thu', hour: '4PM', value: 82 },
+      { day: 'Thu', hour: '5PM', value: 70 },
+      { day: 'Thu', hour: '6PM', value: 40 },
+      { day: 'Fri', hour: '6AM', value: 15 },
+      { day: 'Fri', hour: '7AM', value: 28 },
+      { day: 'Fri', hour: '8AM', value: 55 },
+      { day: 'Fri', hour: '9AM', value: 75 },
+      { day: 'Fri', hour: '10AM', value: 82 },
+      { day: 'Fri', hour: '11AM', value: 78 },
+      { day: 'Fri', hour: '12PM', value: 35 },
+      { day: 'Fri', hour: '1PM', value: 30 },
+      { day: 'Fri', hour: '2PM', value: 25 },
+      { day: 'Fri', hour: '3PM', value: 20 },
+      { day: 'Fri', hour: '4PM', value: 15 },
+      { day: 'Fri', hour: '5PM', value: 10 },
+      { day: 'Fri', hour: '6PM', value: 5 },
+      { day: 'Sat', hour: '6AM', value: 5 },
+      { day: 'Sat', hour: '7AM', value: 8 },
+      { day: 'Sat', hour: '8AM', value: 12 },
+      { day: 'Sat', hour: '9AM', value: 18 },
+      { day: 'Sat', hour: '10AM', value: 22 },
+      { day: 'Sat', hour: '11AM', value: 20 },
+      { day: 'Sat', hour: '12PM', value: 15 },
+      { day: 'Sat', hour: '1PM', value: 12 },
+      { day: 'Sat', hour: '2PM', value: 10 },
+      { day: 'Sat', hour: '3PM', value: 8 },
+      { day: 'Sat', hour: '4PM', value: 6 },
+      { day: 'Sat', hour: '5PM', value: 4 },
+      { day: 'Sat', hour: '6PM', value: 2 },
+      { day: 'Sun', hour: '6AM', value: 8 },
+      { day: 'Sun', hour: '7AM', value: 12 },
+      { day: 'Sun', hour: '8AM', value: 25 },
+      { day: 'Sun', hour: '9AM', value: 35 },
+      { day: 'Sun', hour: '10AM', value: 42 },
+      { day: 'Sun', hour: '11AM', value: 38 },
+      { day: 'Sun', hour: '12PM', value: 22 },
+      { day: 'Sun', hour: '1PM', value: 18 },
+      { day: 'Sun', hour: '2PM', value: 30 },
+      { day: 'Sun', hour: '3PM', value: 35 },
+      { day: 'Sun', hour: '4PM', value: 32 },
+      { day: 'Sun', hour: '5PM', value: 25 },
+      { day: 'Sun', hour: '6PM', value: 15 }
+    ],
+    systemUsage: {
+      weekly: [
+        { day: 'Mon', reports: 145, analytics: 320, dataEntry: 280, exports: 95 },
+        { day: 'Tue', reports: 152, analytics: 335, dataEntry: 295, exports: 102 },
+        { day: 'Wed', reports: 168, analytics: 350, dataEntry: 310, exports: 115 },
+        { day: 'Thu', reports: 175, analytics: 365, dataEntry: 325, exports: 122 },
+        { day: 'Fri', reports: 125, analytics: 280, dataEntry: 240, exports: 85 },
+        { day: 'Sat', reports: 45, analytics: 120, dataEntry: 80, exports: 25 },
+        { day: 'Sun', reports: 65, analytics: 180, dataEntry: 120, exports: 38 }
+      ]
+    }
+  };
 
   const COLORS = ['#D69E2E', '#744210', '#2D3748', '#F6AD55', '#718096', '#E53E3E', '#38B2AC', '#805AD5'];
 
@@ -2041,6 +2169,108 @@ const OsoulReportingSystem = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Heat Map Analytics Section */}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold">{t.heatMapAnalytics}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{t.heatMapAnalyticsDesc}</p>
+                </div>
+                <div className="p-6">
+                  {/* Report Generation Heat Map */}
+                  <div className="mb-8">
+                    <h4 className="text-md font-semibold text-gray-700 mb-4">{t.reportGenerationHeatMap}</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="grid grid-cols-14 gap-1 text-xs">
+                        <div className="col-span-1"></div>
+                        {['6AM', '7AM', '8AM', '9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM'].map(hour => (
+                          <div key={hour} className="text-center text-gray-600">{hour}</div>
+                        ))}
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                          <React.Fragment key={day}>
+                            <div className="text-right pr-2 text-gray-600">{day}</div>
+                            {['6AM', '7AM', '8AM', '9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM'].map(hour => {
+                              const dataPoint = heatMapData.reportGeneration.find(d => d.day === day && d.hour === hour);
+                              const value = dataPoint ? dataPoint.value : 0;
+                              const bgColor = value === 0 ? 'bg-gray-100' :
+                                             value < 30 ? 'bg-yellow-100' :
+                                             value < 60 ? 'bg-yellow-300' :
+                                             value < 80 ? 'bg-yellow-500' :
+                                             'bg-yellow-600';
+                              return (
+                                <div
+                                  key={`${day}-${hour}`}
+                                  className={`${bgColor} rounded aspect-square flex items-center justify-center text-xs font-medium ${value > 60 ? 'text-white' : 'text-gray-700'}`}
+                                  title={`${day} ${hour}: ${value} reports`}
+                                >
+                                  {value > 0 && value}
+                                </div>
+                              );
+                            })}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-gray-100 rounded"></div>
+                            <span className="text-gray-600">{t.lowActivity}</span>
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-yellow-300 rounded"></div>
+                            <span className="text-gray-600">{t.mediumActivity}</span>
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-yellow-600 rounded"></div>
+                            <span className="text-gray-600">{t.highActivity}</span>
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {t.peakHours}: 9AM-11AM
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* System Usage Heat Map */}
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-700 mb-4">{t.systemUsageHeatMap}</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={heatMapData.systemUsage.weekly}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="day" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="reports" stackId="a" fill="#D69E2E" name="Reports" />
+                          <Bar dataKey="analytics" stackId="a" fill="#744210" name="Analytics" />
+                          <Bar dataKey="dataEntry" stackId="a" fill="#F6AD55" name="Data Entry" />
+                          <Bar dataKey="exports" stackId="a" fill="#FBD38D" name="Exports" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-800">875</p>
+                          <p className="text-sm text-gray-600">Total Reports/Week</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-800">1,950</p>
+                          <p className="text-sm text-gray-600">Analytics Sessions</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-800">1,650</p>
+                          <p className="text-sm text-gray-600">Data Entries</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-800">582</p>
+                          <p className="text-sm text-gray-600">File Exports</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
