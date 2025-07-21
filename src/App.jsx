@@ -410,75 +410,92 @@ const OsoulReportingSystem = () => {
   );
 
   const Sidebar = () => (
-    <div className={`fixed ${language === 'ar' ? 'right-0' : 'left-0'} top-0 h-full bg-gradient-to-b from-gray-800 to-gray-700 text-white transition-all duration-300 z-40 ${
-      sidebarOpen ? 'w-64' : 'w-20'
-    }`}>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-8">
-          <div className={`flex items-center ${sidebarOpen ? '' : 'justify-center'}`}>
-            <img 
-              src={osoulLogo} 
-              alt="Osoul Logo" 
-              className="w-12 h-12 object-contain bg-white rounded-lg p-1"
-            />
-            {sidebarOpen && (
-              <div className={language === 'ar' ? 'mr-3' : 'ml-3'}>
-                <h1 className="text-xl font-bold">Osoul Modern</h1>
-                <p className="text-yellow-200 text-xs">أصول الحديثة</p>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-white hover:bg-gray-600 p-2 rounded-lg transition-colors"
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-
-        <nav className="space-y-2">
-          {[
-            { id: 'dashboard', icon: Activity, label: t.dashboard },
-            { id: 'treasury', icon: Building, label: t.treasury },
-            { id: 'risk', icon: Target, label: t.risk },
-            { id: 'corporate', icon: Building, label: t.corporate },
-            { id: 'retail', icon: Users, label: t.retail },
-            { id: 'wealth', icon: Award, label: t.wealth },
-            { id: 'digital', icon: Globe, label: t.digital },
-            { id: 'portfolio', icon: CreditCard, label: t.portfolio },
-            { id: 'compliance', icon: Award, label: t.compliance },
-            { id: 'customers', icon: Users, label: t.customers },
-            { id: 'operations', icon: Clock, label: t.operations },
-            { id: 'reports', icon: FileText, label: t.reports }
-          ].map(item => (
+    <>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      <div className={`fixed ${language === 'ar' ? 'right-0' : 'left-0'} top-0 h-full bg-gradient-to-b from-gray-800 to-gray-700 text-white transition-all duration-300 z-40 ${
+        sidebarOpen ? 'w-64' : `w-20 md:w-20 ${language === 'ar' ? 'translate-x-full md:translate-x-0' : '-translate-x-full md:translate-x-0'}`
+      }`}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-8">
+            <div className={`flex items-center ${sidebarOpen ? '' : 'justify-center'}`}>
+              <img 
+                src={osoulLogo} 
+                alt="Osoul Logo" 
+                className="w-12 h-12 object-contain bg-white rounded-lg p-1"
+              />
+              {sidebarOpen && (
+                <div className={language === 'ar' ? 'mr-3' : 'ml-3'}>
+                  <h1 className="text-xl font-bold">Osoul Modern</h1>
+                  <p className="text-yellow-200 text-xs">أصول الحديثة</p>
+                </div>
+              )}
+            </div>
             <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center ${sidebarOpen ? 'px-4' : 'px-2 justify-center'} py-3 rounded-lg transition-all duration-200 ${
-                activeTab === item.id
-                  ? 'bg-yellow-500 text-gray-800 font-semibold'
-                  : 'text-gray-200 hover:bg-gray-600'
-              }`}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-white hover:bg-gray-600 p-2 rounded-lg transition-colors md:block"
             >
-              <item.icon size={20} />
-              {sidebarOpen && <span className={language === 'ar' ? 'mr-3' : 'ml-3'}>{item.label}</span>}
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-          ))}
-        </nav>
+          </div>
+
+          <nav className="space-y-2">
+            {[
+              { id: 'dashboard', icon: Activity, label: t.dashboard },
+              { id: 'treasury', icon: Building, label: t.treasury },
+              { id: 'risk', icon: Target, label: t.risk },
+              { id: 'corporate', icon: Building, label: t.corporate },
+              { id: 'retail', icon: Users, label: t.retail },
+              { id: 'wealth', icon: Award, label: t.wealth },
+              { id: 'digital', icon: Globe, label: t.digital },
+              { id: 'portfolio', icon: CreditCard, label: t.portfolio },
+              { id: 'compliance', icon: Award, label: t.compliance },
+              { id: 'customers', icon: Users, label: t.customers },
+              { id: 'operations', icon: Clock, label: t.operations },
+              { id: 'reports', icon: FileText, label: t.reports }
+            ].map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center ${sidebarOpen ? 'px-4' : 'px-2 justify-center'} py-3 rounded-lg transition-all duration-200 ${
+                  activeTab === item.id
+                    ? 'bg-yellow-500 text-gray-800 font-semibold'
+                    : 'text-gray-200 hover:bg-gray-600'
+                }`}
+              >
+                <item.icon size={20} />
+                {sidebarOpen && <span className={language === 'ar' ? 'mr-3' : 'ml-3'}>{item.label}</span>}
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
-    </div>
+    </>
   );
 
   return (
     <div className="min-h-screen bg-gray-50" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <Sidebar />
       
-      <div className={`${language === 'ar' ? (sidebarOpen ? 'mr-64' : 'mr-20') : (sidebarOpen ? 'ml-64' : 'ml-20')} transition-all duration-300`}>
+      <div className={`${language === 'ar' ? (sidebarOpen ? 'md:mr-64' : 'md:mr-20') : (sidebarOpen ? 'md:ml-64' : 'md:ml-20')} transition-all duration-300`}>
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
+                {/* Mobile menu button - only visible on small screens when sidebar is closed */}
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className={`md:hidden text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors ${sidebarOpen ? 'hidden' : 'block'}`}
+                >
+                  <Menu size={24} />
+                </button>
                 <img 
                   src={osoulLogo} 
                   alt="Osoul Logo" 
