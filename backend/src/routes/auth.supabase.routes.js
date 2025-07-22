@@ -1,7 +1,9 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import pool from '../config/database.js';
+import supabase from '../config/supabase.js';
+import { authenticate } from '../middleware/auth.supabase.js';
 
 const router = express.Router();
 
@@ -14,7 +16,7 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// Login route for Supabase (uses crypt for password verification)
+// Login
 router.post('/login',
   [
     body('email').isEmail().normalizeEmail(),
@@ -25,21 +27,30 @@ router.post('/login',
     try {
       const { email, password } = req.body;
 
-      // Find user and verify password using Supabase's crypt function
-      const result = await pool.query(
-        `SELECT id, email, first_name, last_name, role, is_active 
-         FROM users 
-         WHERE email = $1 
-         AND password = crypt($2, password)
-         AND is_active = true`,
-        [email, password]
-      );
+      // Find user using Supabase
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('is_active', true)
+        .limit(1);
 
-      if (result.rows.length === 0) {
+      if (error) {
+        console.error('Database error:', error);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (!users || users.length === 0) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      const user = result.rows[0];
+      const user = users[0];
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
 
       // Generate token
       const token = jwt.sign(
@@ -59,9 +70,45 @@ router.post('/login',
         token
       });
     } catch (error) {
+      console.error('Login error:', error);
       next(error);
     }
   }
 );
 
+// Get current user
+router.get('/me', authenticate, async (req, res, next) => {
+  try {
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name, role, is_active')
+      .eq('id', req.user.id)
+      .limit(1);
+
+    if (error) {
+      console.error('Database error:', error);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = users[0];
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
+    next(error);
+  }
+});
+
 export default router;
+

@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
 // Import routes
-import authRoutes from './routes/auth.routes.js';
+import authRoutes from './routes/auth.supabase.routes.js';
 import branchRoutes from './routes/branch.routes.js';
 import collectionRoutes from './routes/collection.routes.js';
 import reportRoutes from './routes/report.routes.js';
