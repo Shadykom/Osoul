@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuthStore } from '@/stores/authStore';
+import useAuthStore from '@/stores/authStore';
 import osoulLogo from '@/assets/osoul-logo.png';
 
 const loginSchema = z.object({
@@ -22,6 +22,7 @@ const loginSchema = z.object({
 export default function Login() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const login = useAuthStore((state) => state.login);
 
   const {
     register,
@@ -34,14 +35,21 @@ export default function Login() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const response = await authService.login(data.email, data.password);
-      toast.success('Login successful!');
-      
-      // Redirect based on user role
-      if (response.user.role === 'admin') {
-        navigate('/dashboard');
+      const result = await login(data.email, data.password);
+      if (result.success) {
+        toast.success('Login successful!');
+        
+        // Get the user from the store after successful login
+        const user = useAuthStore.getState().user;
+        
+        // Redirect based on user role
+        if (user.role === 'admin') {
+          navigate('/dashboard');
+        } else {
+          navigate('/');
+        }
       } else {
-        navigate('/');
+        toast.error(result.error || 'Login failed. Please try again.');
       }
     } catch (error) {
       toast.error(error.response?.data?.error || 'Login failed. Please try again.');
