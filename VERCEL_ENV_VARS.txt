@@ -1,0 +1,14 @@
+# VERCEL ENVIRONMENT VARIABLE (Copy this to Vercel Dashboard)
+# Go to: Vercel Dashboard → Your Project → Settings → Environment Variables
+
+Variable Name: VITE_API_URL
+Variable Value: [REPLACE_WITH_YOUR_RAILWAY_URL]/api/v1
+
+# Example:
+# VITE_API_URL = https://osoul-backend-production.up.railway.app/api/v1
+
+# IMPORTANT: 
+# 1. Replace [REPLACE_WITH_YOUR_RAILWAY_URL] with your actual Railway deployment URL
+# 2. Make sure to add /api/v1 at the end
+# 3. Use https:// not http://
+# 4. No trailing slash after v1
