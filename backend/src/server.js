@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 // API routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/branches', branchRoutes);
-app.use('/api/v1/collections', collectionRoutes);
+app.use('/api/v1/collection', collectionRoutes);
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/dashboards', dashboardRoutes);
 
