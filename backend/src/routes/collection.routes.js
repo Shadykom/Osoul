@@ -1,7 +1,8 @@
 import express from 'express';
-import { body, query, validationResult } from 'express-validator';
+import { query, validationResult } from 'express-validator';
 import pool from '../config/database.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
+import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter } from 'date-fns';
 
 const router = express.Router();
 
@@ -14,90 +15,80 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// Get all collection transactions with filters
-router.get('/',
+// Dashboard Summary Metrics
+router.get('/dashboard/summary',
   authenticate,
-  [
-    query('branchId').optional().isInt(),
-    query('startDate').optional().isISO8601(),
-    query('endDate').optional().isISO8601(),
-    query('status').optional().isIn(['pending', 'completed', 'cancelled']),
-    query('page').optional().isInt({ min: 1 }),
-    query('limit').optional().isInt({ min: 1, max: 100 })
-  ],
-  handleValidationErrors,
   async (req, res, next) => {
     try {
-      const { 
-        branchId, 
-        startDate, 
-        endDate, 
-        status,
-        page = 1,
-        limit = 20
-      } = req.query;
+      const { branch, startDate, endDate } = req.query;
       
-      let whereConditions = [];
-      let params = [];
-      let paramCount = 1;
+      let branchFilter = '';
+      const params = [];
       
-      if (branchId) {
-        whereConditions.push(`ct.branch_id = $${paramCount}`);
-        params.push(branchId);
-        paramCount++;
+      if (branch && branch !== 'all') {
+        branchFilter = 'AND fa.branch_code = $1';
+        params.push(branch);
       }
       
-      if (startDate && endDate) {
-        whereConditions.push(`ct.transaction_date BETWEEN $${paramCount} AND $${paramCount + 1}`);
-        params.push(startDate, endDate);
-        paramCount += 2;
-      }
+      // Get summary metrics
+      const summaryQuery = `
+        SELECT 
+          COUNT(DISTINCT fa.account_id) as total_accounts,
+          SUM(fa.outstanding_amount) as total_outstanding,
+          SUM(CASE WHEN cc.case_status = 'Active' THEN 1 ELSE 0 END) as active_cases,
+          AVG(fa.dpd) as avg_dpd,
+          SUM(CASE WHEN fa.dpd > 90 THEN fa.outstanding_amount ELSE 0 END) as npl_amount,
+          ROUND((SUM(CASE WHEN fa.dpd > 90 THEN fa.outstanding_amount ELSE 0 END) / 
+                 NULLIF(SUM(fa.outstanding_amount), 0)) * 100, 2) as npl_ratio
+        FROM finance_accounts fa
+        LEFT JOIN collection_cases cc ON fa.account_id = cc.account_id
+        WHERE fa.account_status = 'Delinquent'
+        ${branchFilter}
+      `;
       
-      if (status) {
-        whereConditions.push(`ct.status = $${paramCount}`);
-        params.push(status);
-        paramCount++;
-      }
+      const collectionQuery = `
+        SELECT 
+          SUM(pt.payment_amount) as total_collected,
+          COUNT(DISTINCT pt.account_id) as accounts_collected
+        FROM payment_transactions pt
+        JOIN finance_accounts fa ON pt.account_id = fa.account_id
+        WHERE pt.payment_date >= CURRENT_DATE - INTERVAL '30 days'
+        ${branchFilter}
+      `;
       
-      const whereClause = whereConditions.length > 0 
-        ? 'WHERE ' + whereConditions.join(' AND ')
-        : '';
+      const ptpQuery = `
+        SELECT 
+          COUNT(*) as total_ptps,
+          SUM(CASE WHEN kept_flag = TRUE THEN 1 ELSE 0 END) as kept_ptps,
+          ROUND((SUM(CASE WHEN kept_flag = TRUE THEN 1 ELSE 0 END)::NUMERIC / 
+                 NULLIF(COUNT(*), 0)) * 100, 2) as ptp_kept_rate
+        FROM promise_to_pay ptp
+        JOIN finance_accounts fa ON ptp.account_id = fa.account_id
+        WHERE ptp.promise_date >= CURRENT_DATE - INTERVAL '30 days'
+        ${branchFilter}
+      `;
       
-      // Get total count
-      const countResult = await pool.query(
-        `SELECT COUNT(*) FROM collection_transactions ct ${whereClause}`,
-        params
-      );
+      const [summaryResult, collectionResult, ptpResult] = await Promise.all([
+        pool.query(summaryQuery, params),
+        pool.query(collectionQuery, params),
+        pool.query(ptpQuery, params)
+      ]);
       
-      const totalCount = parseInt(countResult.rows[0].count);
-      const totalPages = Math.ceil(totalCount / limit);
-      const offset = (page - 1) * limit;
-      
-      // Get paginated results
-      params.push(limit, offset);
-      
-      const result = await pool.query(
-        `SELECT ct.*, 
-                b.branch_name, 
-                b.branch_code,
-                u.first_name || ' ' || u.last_name as collector_name
-         FROM collection_transactions ct
-         JOIN branches b ON ct.branch_id = b.id
-         LEFT JOIN users u ON ct.collector_id = u.id
-         ${whereClause}
-         ORDER BY ct.transaction_date DESC, ct.created_at DESC
-         LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
-        params
-      );
+      const summary = summaryResult.rows[0];
+      const collection = collectionResult.rows[0];
+      const ptp = ptpResult.rows[0];
       
       res.json({
-        data: result.rows,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalCount,
-          totalPages
-        }
+        totalOutstanding: parseFloat(summary.total_outstanding || 0),
+        totalCollected: parseFloat(collection.total_collected || 0),
+        collectionRate: summary.total_outstanding > 0 
+          ? ((collection.total_collected / summary.total_outstanding) * 100).toFixed(2)
+          : 0,
+        activeAccounts: parseInt(summary.total_accounts || 0),
+        promisesToPay: parseInt(ptp.total_ptps || 0),
+        ptpKeptRate: parseFloat(ptp.ptp_kept_rate || 0),
+        avgDPD: parseInt(summary.avg_dpd || 0),
+        nplRatio: parseFloat(summary.npl_ratio || 0)
       });
     } catch (error) {
       next(error);
@@ -105,207 +96,81 @@ router.get('/',
   }
 );
 
-// Get collection transaction by ID
-router.get('/:id', authenticate, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    
-    const result = await pool.query(
-      `SELECT ct.*, 
-              b.branch_name, 
-              b.branch_code,
-              u.first_name || ' ' || u.last_name as collector_name
-       FROM collection_transactions ct
-       JOIN branches b ON ct.branch_id = b.id
-       LEFT JOIN users u ON ct.collector_id = u.id
-       WHERE ct.id = $1`,
-      [id]
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Transaction not found' });
-    }
-    
-    res.json(result.rows[0]);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Create new collection transaction
-router.post('/',
-  authenticate,
-  authorize('admin', 'manager', 'collector'),
-  [
-    body('branchId').isInt(),
-    body('transactionDate').isISO8601(),
-    body('customerId').optional().trim(),
-    body('customerName').notEmpty().trim(),
-    body('accountNumber').optional().trim(),
-    body('transactionType').notEmpty().trim(),
-    body('amount').isFloat({ min: 0 }),
-    body('currency').optional().default('SAR'),
-    body('paymentMethod').optional().trim(),
-    body('status').optional().isIn(['pending', 'completed', 'cancelled']),
-    body('referenceNumber').optional().trim(),
-    body('notes').optional().trim()
-  ],
-  handleValidationErrors,
-  async (req, res, next) => {
-    try {
-      const {
-        branchId,
-        transactionDate,
-        customerId,
-        customerName,
-        accountNumber,
-        transactionType,
-        amount,
-        currency,
-        paymentMethod,
-        status = 'completed',
-        referenceNumber,
-        notes
-      } = req.body;
-      
-      // Check if reference number is unique
-      if (referenceNumber) {
-        const existing = await pool.query(
-          'SELECT id FROM collection_transactions WHERE reference_number = $1',
-          [referenceNumber]
-        );
-        
-        if (existing.rows.length > 0) {
-          return res.status(409).json({ error: 'Reference number already exists' });
-        }
-      }
-      
-      const result = await pool.query(
-        `INSERT INTO collection_transactions 
-         (branch_id, transaction_date, customer_id, customer_name, account_number,
-          transaction_type, amount, currency, payment_method, collector_id, 
-          status, reference_number, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-         RETURNING *`,
-        [
-          branchId, transactionDate, customerId, customerName, accountNumber,
-          transactionType, amount, currency, paymentMethod, req.user.id,
-          status, referenceNumber, notes
-        ]
-      );
-      
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Update collection transaction
-router.put('/:id',
-  authenticate,
-  authorize('admin', 'manager'),
-  [
-    body('status').optional().isIn(['pending', 'completed', 'cancelled']),
-    body('notes').optional().trim()
-  ],
-  handleValidationErrors,
-  async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const { status, notes } = req.body;
-      
-      const updateFields = [];
-      const values = [];
-      let paramCount = 1;
-      
-      if (status) {
-        updateFields.push(`status = $${paramCount}`);
-        values.push(status);
-        paramCount++;
-      }
-      
-      if (notes !== undefined) {
-        updateFields.push(`notes = $${paramCount}`);
-        values.push(notes);
-        paramCount++;
-      }
-      
-      if (updateFields.length === 0) {
-        return res.status(400).json({ error: 'No fields to update' });
-      }
-      
-      values.push(id);
-      
-      const result = await pool.query(
-        `UPDATE collection_transactions 
-         SET ${updateFields.join(', ')}
-         WHERE id = $${paramCount}
-         RETURNING *`,
-        values
-      );
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Transaction not found' });
-      }
-      
-      res.json(result.rows[0]);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Delete collection transaction
-router.delete('/:id',
-  authenticate,
-  authorize('admin'),
-  async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      
-      const result = await pool.query(
-        'DELETE FROM collection_transactions WHERE id = $1 RETURNING id',
-        [id]
-      );
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Transaction not found' });
-      }
-      
-      res.json({ message: 'Transaction deleted successfully' });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Get collection targets
-router.get('/targets/:branchId',
+// Collection Trends
+router.get('/dashboard/trends/:period',
   authenticate,
   async (req, res, next) => {
     try {
-      const { branchId } = req.params;
-      const { year } = req.query;
+      const { period } = req.params;
+      const { branch } = req.query;
       
-      let query = `
-        SELECT ct.*, 
-               b.branch_name,
-               u.first_name || ' ' || u.last_name as created_by_name
-        FROM collection_targets ct
-        JOIN branches b ON ct.branch_id = b.id
-        LEFT JOIN users u ON ct.created_by = u.id
-        WHERE ct.branch_id = $1
+      let dateFormat, interval;
+      switch (period) {
+        case 'daily':
+          dateFormat = 'YYYY-MM-DD';
+          interval = '30 days';
+          break;
+        case 'weekly':
+          dateFormat = 'YYYY-WW';
+          interval = '12 weeks';
+          break;
+        case 'monthly':
+          dateFormat = 'YYYY-MM';
+          interval = '12 months';
+          break;
+        default:
+          dateFormat = 'YYYY-MM-DD';
+          interval = '30 days';
+      }
+      
+      let branchFilter = '';
+      const params = [];
+      
+      if (branch && branch !== 'all') {
+        branchFilter = 'AND fa.branch_code = $1';
+        params.push(branch);
+      }
+      
+      const query = `
+        WITH date_series AS (
+          SELECT generate_series(
+            CURRENT_DATE - INTERVAL '${interval}',
+            CURRENT_DATE,
+            '1 ${period}'::INTERVAL
+          )::DATE as date
+        ),
+        collections AS (
+          SELECT 
+            TO_CHAR(pt.payment_date, '${dateFormat}') as period,
+            SUM(pt.payment_amount) as collected,
+            COUNT(DISTINCT pt.account_id) as accounts
+          FROM payment_transactions pt
+          JOIN finance_accounts fa ON pt.account_id = fa.account_id
+          WHERE pt.payment_date >= CURRENT_DATE - INTERVAL '${interval}'
+          ${branchFilter}
+          GROUP BY TO_CHAR(pt.payment_date, '${dateFormat}')
+        ),
+        ptps AS (
+          SELECT 
+            TO_CHAR(ptp.promise_date, '${dateFormat}') as period,
+            COUNT(*) as ptp_count
+          FROM promise_to_pay ptp
+          JOIN finance_accounts fa ON ptp.account_id = fa.account_id
+          WHERE ptp.promise_date >= CURRENT_DATE - INTERVAL '${interval}'
+          ${branchFilter}
+          GROUP BY TO_CHAR(ptp.promise_date, '${dateFormat}')
+        )
+        SELECT 
+          TO_CHAR(ds.date, '${dateFormat}') as date,
+          COALESCE(c.collected, 0) as collected,
+          COALESCE(c.accounts, 0) as accounts,
+          COALESCE(p.ptp_count, 0) as ptp,
+          400000 as target -- Mock target, should come from targets table
+        FROM date_series ds
+        LEFT JOIN collections c ON TO_CHAR(ds.date, '${dateFormat}') = c.period
+        LEFT JOIN ptps p ON TO_CHAR(ds.date, '${dateFormat}') = p.period
+        ORDER BY ds.date
       `;
-      
-      const params = [branchId];
-      
-      if (year) {
-        query += ' AND ct.target_year = $2';
-        params.push(year);
-      }
-      
-      query += ' ORDER BY ct.target_year DESC, ct.target_month DESC';
       
       const result = await pool.query(query, params);
       res.json(result.rows);
@@ -315,37 +180,198 @@ router.get('/targets/:branchId',
   }
 );
 
-// Set collection target
-router.post('/targets',
+// Aging Analysis
+router.get('/dashboard/aging',
   authenticate,
-  authorize('admin', 'manager'),
-  [
-    body('branchId').isInt(),
-    body('targetMonth').isInt({ min: 1, max: 12 }),
-    body('targetYear').isInt({ min: 2020 }),
-    body('targetAmount').isFloat({ min: 0 }),
-    body('currency').optional().default('SAR')
-  ],
-  handleValidationErrors,
   async (req, res, next) => {
     try {
-      const { branchId, targetMonth, targetYear, targetAmount, currency } = req.body;
+      const { branch } = req.query;
       
-      const result = await pool.query(
-        `INSERT INTO collection_targets 
-         (branch_id, target_month, target_year, target_amount, currency, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (branch_id, target_month, target_year)
-         DO UPDATE SET target_amount = $4, currency = $5, created_by = $6
-         RETURNING *`,
-        [branchId, targetMonth, targetYear, targetAmount, currency, req.user.id]
-      );
+      let branchFilter = '';
+      const params = [];
       
-      res.json(result.rows[0]);
+      if (branch && branch !== 'all') {
+        branchFilter = 'AND branch_code = $1';
+        params.push(branch);
+      }
+      
+      const query = `
+        SELECT 
+          CASE 
+            WHEN dpd = 0 THEN 'Current'
+            WHEN dpd BETWEEN 1 AND 30 THEN '1-30'
+            WHEN dpd BETWEEN 31 AND 60 THEN '31-60'
+            WHEN dpd BETWEEN 61 AND 90 THEN '61-90'
+            WHEN dpd BETWEEN 91 AND 180 THEN '91-180'
+            ELSE '180+'
+          END AS bucket,
+          COUNT(*) as count,
+          SUM(outstanding_amount) as amount,
+          ROUND((SUM(outstanding_amount) / 
+                (SELECT SUM(outstanding_amount) FROM finance_accounts WHERE account_status = 'Delinquent' ${branchFilter})) * 100, 2) as percentage
+        FROM finance_accounts
+        WHERE account_status = 'Delinquent'
+        ${branchFilter}
+        GROUP BY 
+          CASE 
+            WHEN dpd = 0 THEN 'Current'
+            WHEN dpd BETWEEN 1 AND 30 THEN '1-30'
+            WHEN dpd BETWEEN 31 AND 60 THEN '31-60'
+            WHEN dpd BETWEEN 61 AND 90 THEN '61-90'
+            WHEN dpd BETWEEN 91 AND 180 THEN '91-180'
+            ELSE '180+'
+          END
+        ORDER BY 
+          CASE bucket
+            WHEN 'Current' THEN 1
+            WHEN '1-30' THEN 2
+            WHEN '31-60' THEN 3
+            WHEN '61-90' THEN 4
+            WHEN '91-180' THEN 5
+            ELSE 6
+          END
+      `;
+      
+      const result = await pool.query(query, params);
+      res.json(result.rows);
     } catch (error) {
       next(error);
     }
   }
 );
+
+// Collector Performance
+router.get('/dashboard/collector-performance',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { branch, period = '30 days' } = req.query;
+      
+      let branchFilter = '';
+      const params = [period];
+      
+      if (branch && branch !== 'all') {
+        branchFilter = 'AND EXISTS (SELECT 1 FROM collection_cases cc2 JOIN finance_accounts fa ON cc2.account_id = fa.account_id WHERE cc2.assigned_collector_id = c.collector_id AND fa.branch_code = $2)';
+        params.push(branch);
+      }
+      
+      const query = `
+        SELECT 
+          c.collector_id,
+          c.employee_name as name,
+          COUNT(DISTINCT cc.case_id) as cases,
+          SUM(cc.total_outstanding) as assigned_amount,
+          COALESCE(SUM(pt.payment_amount), 0) as collected,
+          COALESCE(cp.target_amount, 150000) as target,
+          COUNT(DISTINCT ptp.ptp_id) as ptp_obtained,
+          SUM(CASE WHEN ptp.kept_flag = TRUE THEN 1 ELSE 0 END) as ptp_kept,
+          ROUND((SUM(CASE WHEN ptp.kept_flag = TRUE THEN 1 ELSE 0 END)::NUMERIC / 
+                 NULLIF(COUNT(DISTINCT ptp.ptp_id), 0)) * 100, 2) as ptp_rate
+        FROM collectors c
+        LEFT JOIN collection_cases cc ON c.collector_id = cc.assigned_collector_id
+        LEFT JOIN payment_transactions pt ON c.collector_id = pt.collected_by 
+          AND pt.payment_date >= CURRENT_DATE - INTERVAL $1
+        LEFT JOIN promise_to_pay ptp ON c.collector_id = ptp.collector_id
+          AND ptp.created_date >= CURRENT_DATE - INTERVAL $1
+        LEFT JOIN collector_performance cp ON c.collector_id = cp.collector_id
+          AND cp.performance_date = CURRENT_DATE
+        WHERE c.is_active = TRUE
+        ${branchFilter}
+        GROUP BY c.collector_id, c.employee_name, cp.target_amount
+        ORDER BY collected DESC
+      `;
+      
+      const result = await pool.query(query, params);
+      res.json(result.rows);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Product-wise NPF
+router.get('/dashboard/product-npf',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { branch } = req.query;
+      
+      let branchFilter = '';
+      const params = [];
+      
+      if (branch && branch !== 'all') {
+        branchFilter = 'WHERE branch_code = $1';
+        params.push(branch);
+      }
+      
+      const query = `
+        SELECT 
+          product_type as product,
+          SUM(CASE WHEN dpd > 90 THEN outstanding_amount ELSE 0 END) as amount,
+          ROUND((SUM(CASE WHEN dpd > 90 THEN outstanding_amount ELSE 0 END) / 
+                 NULLIF(SUM(outstanding_amount), 0)) * 100, 2) as npf
+        FROM finance_accounts
+        ${branchFilter}
+        GROUP BY product_type
+        ORDER BY npf DESC
+      `;
+      
+      const result = await pool.query(query, params);
+      res.json(result.rows);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Reports endpoints
+router.get('/reports/daily',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { date, branch, collector } = req.query;
+      const targetDate = date || format(new Date(), 'yyyy-MM-dd');
+      
+      let filters = [];
+      const params = [targetDate];
+      
+      if (branch && branch !== 'all') {
+        params.push(branch);
+        filters.push(`fa.branch_code = $${params.length}`);
+      }
+      
+      if (collector && collector !== 'all') {
+        params.push(collector);
+        filters.push(`pt.collected_by = $${params.length}`);
+      }
+      
+      const whereClause = filters.length > 0 ? `AND ${filters.join(' AND ')}` : '';
+      
+      const query = `
+        SELECT 
+          DATE(pt.payment_date) as date,
+          COUNT(DISTINCT pt.account_id) as accounts,
+          SUM(pt.payment_amount) as collected,
+          COUNT(DISTINCT ca.activity_id) as calls,
+          COUNT(DISTINCT CASE WHEN ca.activity_type = 'Visit' THEN ca.activity_id END) as visits,
+          150000 as target -- Mock target
+        FROM payment_transactions pt
+        JOIN finance_accounts fa ON pt.account_id = fa.account_id
+        LEFT JOIN collection_activities ca ON pt.account_id = ca.account_id
+          AND DATE(ca.activity_datetime) = DATE(pt.payment_date)
+        WHERE DATE(pt.payment_date) = $1::DATE
+        ${whereClause}
+        GROUP BY DATE(pt.payment_date)
+      `;
+      
+      const result = await pool.query(query, params);
+      res.json(result.rows);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Add more report endpoints...
 
 export default router;
