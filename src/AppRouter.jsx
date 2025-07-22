@@ -1,9 +1,10 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
 import MainLayout from './components/Layout/MainLayout';
 import OsoulReportingSystem from './App';
+import './App.css'
 
 // Collection pages
 import CollectionLayout from './pages/Collection';
