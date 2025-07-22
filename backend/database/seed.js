@@ -68,7 +68,7 @@ async function seed() {
           const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
           const amount = (Math.random() * 9000 + 1000).toFixed(2); // 1000-10000 SAR
           const collectorId = users.rows[Math.floor(Math.random() * 2) + 2].id; // Random collector
-          const referenceNumber = `REF${Date.now()}${j}`;
+          const referenceNumber = `REF${Date.now()}${i}${j}${Math.floor(Math.random() * 1000)}`;
           
           await client.query(
             `INSERT INTO collection_transactions 
