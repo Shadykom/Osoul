@@ -1,0 +1,12 @@
+
+    Frontend: http://localhost:5173
+    Backend API: http://localhost:5000
+    pgAdmin: http://localhost:5050
+
+Default Credentials:
+
+    Admin: admin@osoul.com / password123
+    Manager: manager@osoul.com / password123
+    Collector: collector1@osoul.com / password123
+    Viewer: viewer@osoul.com / password123
+
