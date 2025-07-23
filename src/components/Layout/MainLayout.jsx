@@ -14,10 +14,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import osoulLogo from '@/assets/osoul-logo.png';
+import useAuthStore from '@/stores/authStore';
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+  const { logout } = useAuthStore();
   const location = useLocation();
 
   const menuItems = [
@@ -61,9 +63,8 @@ const MainLayout = () => {
     }
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 

@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import supabaseDashboard from '@/services/supabaseDashboard';
 
 const CollectionDashboard = () => {
   const [selectedBranch, setSelectedBranch] = useState('all');
@@ -27,50 +29,60 @@ const CollectionDashboard = () => {
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date()
   });
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // State for dashboard data
+  const [summaryMetrics, setSummaryMetrics] = useState({
+    totalOutstanding: 0,
+    totalCollected: 0,
+    collectionRate: 0,
+    activeAccounts: 0,
+    promisesToPay: 0,
+    ptpKeptRate: 0,
+    avgDPD: 0,
+    nplRatio: 0
+  });
+  
+  const [collectionTrend, setCollectionTrend] = useState([]);
+  const [agingBuckets, setAgingBuckets] = useState([]);
+  const [collectorPerformance, setCollectorPerformance] = useState([]);
+  const [productWiseNPF, setProductWiseNPF] = useState([]);
 
-  // Mock data - replace with API calls
-  const summaryMetrics = {
-    totalOutstanding: 2850000,
-    totalCollected: 450000,
-    collectionRate: 15.8,
-    activeAccounts: 342,
-    promisesToPay: 45,
-    ptpKeptRate: 73.3,
-    avgDPD: 67,
-    nplRatio: 12.5
+  // Fetch dashboard data
+  useEffect(() => {
+    fetchDashboardData();
+  }, [selectedBranch, dateRange]);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const filters = {
+        branchId: selectedBranch !== 'all' ? selectedBranch : null,
+        startDate: dateRange.from?.toISOString(),
+        endDate: dateRange.to?.toISOString()
+      };
+
+      // Fetch all dashboard data in parallel
+      const [metrics, trend, aging, collectors, npf] = await Promise.all([
+        supabaseDashboard.getSummaryMetrics(filters),
+        supabaseDashboard.getCollectionTrend(filters),
+        supabaseDashboard.getAgingBuckets(filters),
+        supabaseDashboard.getCollectorPerformance(filters),
+        supabaseDashboard.getProductWiseNPF(filters)
+      ]);
+
+      setSummaryMetrics(metrics);
+      setCollectionTrend(trend);
+      setAgingBuckets(aging);
+      setCollectorPerformance(collectors);
+      setProductWiseNPF(npf);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  const collectionTrend = [
-    { date: '2024-01-01', collected: 380000, target: 400000, ptp: 35 },
-    { date: '2024-01-08', collected: 420000, target: 400000, ptp: 42 },
-    { date: '2024-01-15', collected: 450000, target: 400000, ptp: 45 },
-    { date: '2024-01-22', collected: 390000, target: 400000, ptp: 38 }
-  ];
-
-  const agingBuckets = [
-    { bucket: 'Current', count: 45, amount: 125000, percentage: 4.4 },
-    { bucket: '1-30', count: 78, amount: 285000, percentage: 10 },
-    { bucket: '31-60', count: 92, amount: 420000, percentage: 14.7 },
-    { bucket: '61-90', count: 85, amount: 580000, percentage: 20.4 },
-    { bucket: '91-180', count: 65, amount: 750000, percentage: 26.3 },
-    { bucket: '180+', count: 42, amount: 690000, percentage: 24.2 }
-  ];
-
-  const collectorPerformance = [
-    { name: 'Abdulaziz Al-Rasheed', collected: 125000, target: 150000, cases: 25, ptpRate: 85 },
-    { name: 'Sara Al-Mutairi', collected: 95000, target: 120000, cases: 20, ptpRate: 75 },
-    { name: 'Mohammed Al-Qahtani', collected: 180000, target: 200000, cases: 30, ptpRate: 90 },
-    { name: 'Huda Al-Shahrani', collected: 80000, target: 100000, cases: 22, ptpRate: 70 },
-    { name: 'Omar Al-Harbi', collected: 210000, target: 250000, cases: 28, ptpRate: 88 }
-  ];
-
-  const productWiseNPF = [
-    { product: 'Auto Finance', npf: 12.5, amount: 750000 },
-    { product: 'Personal Finance', npf: 18.2, amount: 320000 },
-    { product: 'Home Finance', npf: 8.5, amount: 1250000 },
-    { product: 'SME Finance', npf: 15.8, amount: 480000 },
-    { product: 'Credit Card', npf: 22.5, amount: 150000 }
-  ];
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
