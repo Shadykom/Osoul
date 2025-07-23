@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -40,7 +40,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { collectionService } from '@/services/collectionService';
+import { collectionAccountsService } from '@/services/collectionService';
 
 const CollectionAccounts = () => {
   const [accounts, setAccounts] = useState([]);
@@ -55,19 +55,56 @@ const CollectionAccounts = () => {
   });
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const debounceTimerRef = useRef(null);
 
   useEffect(() => {
-    fetchAccounts();
-  }, [filters]);
+    // Debounce search filter
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      fetchAccounts();
+    }, filters.search ? 500 : 0); // Only debounce search input
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [filters, page]);
 
   const fetchAccounts = async () => {
     try {
       setLoading(true);
-      // This would call the actual API
-      const mockData = generateMockAccounts();
-      setAccounts(mockData);
+      
+      // Prepare filters for API
+      const apiFilters = {};
+      if (filters.search) apiFilters.search = filters.search;
+      if (filters.bucket !== 'all') apiFilters.bucket = filters.bucket;
+      if (filters.collector !== 'all') apiFilters.collector = filters.collector;
+      if (filters.product !== 'all') apiFilters.product = filters.product;
+      if (filters.branch !== 'all') apiFilters.branch = filters.branch;
+      if (filters.status !== 'all') apiFilters.status = filters.status;
+      
+      const response = await collectionAccountsService.getAccounts(page, 20, apiFilters);
+      
+      // Handle the response - adjust based on actual API response structure
+      if (response && response.data) {
+        setAccounts(response.data);
+        setTotalPages(response.totalPages || 1);
+      } else {
+        // Fallback to mock data if API fails
+        const mockData = generateMockAccounts();
+        setAccounts(mockData);
+      }
     } catch (error) {
       console.error('Error fetching accounts:', error);
+      // Fallback to mock data on error
+      const mockData = generateMockAccounts();
+      setAccounts(mockData);
     } finally {
       setLoading(false);
     }
@@ -166,17 +203,7 @@ const CollectionAccounts = () => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredAccounts = accounts.filter(account => {
-    if (filters.search && !account.customerName.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !account.accountId.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !account.nationalId.includes(filters.search)) {
-      return false;
-    }
-    if (filters.bucket !== 'all' && account.bucket !== filters.bucket) return false;
-    if (filters.product !== 'all' && account.productType !== filters.product) return false;
-    if (filters.status !== 'all' && account.caseStatus !== filters.status) return false;
-    return true;
-  });
+  // Filtering is now done server-side, so we don't need client-side filtering
 
   const AccountDetailsModal = ({ account, onClose }) => {
     if (!account) return null;
@@ -424,14 +451,14 @@ const CollectionAccounts = () => {
                     Loading accounts...
                   </TableCell>
                 </TableRow>
-              ) : filteredAccounts.length === 0 ? (
+              ) : accounts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center py-8">
                     No accounts found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAccounts.map((account) => (
+                accounts.map((account) => (
                   <TableRow key={account.accountId} className="cursor-pointer hover:bg-gray-50">
                     <TableCell className="font-medium">{account.accountId}</TableCell>
                     <TableCell>

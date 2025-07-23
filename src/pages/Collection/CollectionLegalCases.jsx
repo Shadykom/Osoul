@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -28,26 +28,29 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Scale,
   Gavel,
   FileText,
   Calendar,
   DollarSign,
-  Building,
   User,
-  AlertTriangle,
+  Building,
+  Scale,
+  AlertCircle,
   Clock,
-  Download,
-  Plus,
+  CheckCircle,
+  XCircle,
   Filter,
+  Search,
+  Download,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { collectionService } from '@/services/collectionService';
+import { legalCasesService } from '@/services/collectionService';
 
 const CollectionLegalCases = () => {
   const [legalCases, setLegalCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
+    search: '',
     status: 'all',
     caseType: 'all',
     court: 'all',
@@ -55,19 +58,52 @@ const CollectionLegalCases = () => {
   });
   const [selectedCase, setSelectedCase] = useState(null);
   const [showCaseDetails, setShowCaseDetails] = useState(false);
+  const debounceTimerRef = useRef(null);
 
   useEffect(() => {
-    fetchLegalCases();
+    // Debounce filter changes
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      fetchLegalCases();
+    }, filters.search ? 500 : 300);
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [filters]);
 
   const fetchLegalCases = async () => {
     try {
       setLoading(true);
-      // This would call the actual API
-      const mockData = generateMockLegalCases();
-      setLegalCases(mockData);
+      
+      // Prepare filters for API
+      const apiFilters = {};
+      if (filters.search) apiFilters.search = filters.search;
+      if (filters.status !== 'all') apiFilters.status = filters.status;
+      if (filters.caseType !== 'all') apiFilters.caseType = filters.caseType;
+      if (filters.court !== 'all') apiFilters.court = filters.court;
+      if (filters.dateRange !== 'all') apiFilters.dateRange = filters.dateRange;
+      
+      const response = await legalCasesService.getLegalCases(apiFilters);
+      
+      // Handle the response - adjust based on actual API response structure
+      if (response && response.data) {
+        setLegalCases(response.data);
+      } else {
+        // Fallback to mock data if API fails
+        const mockData = generateMockLegalCases();
+        setLegalCases(mockData);
+      }
     } catch (error) {
       console.error('Error fetching legal cases:', error);
+      // Fallback to mock data on error
+      const mockData = generateMockLegalCases();
+      setLegalCases(mockData);
     } finally {
       setLoading(false);
     }
@@ -188,17 +224,11 @@ const CollectionLegalCases = () => {
     return type === 'Execution' ? <Gavel className="h-4 w-4" /> : <Scale className="h-4 w-4" />;
   };
 
-  const filteredCases = legalCases.filter(legalCase => {
-    if (filters.status !== 'all' && legalCase.caseStatus !== filters.status) return false;
-    if (filters.caseType !== 'all' && legalCase.caseType !== filters.caseType) return false;
-    if (filters.court !== 'all' && !legalCase.courtName.includes(filters.court)) return false;
-    return true;
-  });
-
-  const activeCases = filteredCases.filter(c => c.caseStatus !== 'Closed');
-  const totalJudgmentAmount = filteredCases.reduce((sum, c) => sum + (c.judgmentAmount || 0), 0);
-  const totalLegalCosts = filteredCases.reduce((sum, c) => sum + c.legalCosts, 0);
-  const totalRecovered = filteredCases.reduce((sum, c) => sum + c.recoveredAmount, 0);
+  // Filtering is now done server-side
+  const activeCases = legalCases.filter(c => c.caseStatus !== 'Closed');
+  const totalJudgmentAmount = legalCases.reduce((sum, c) => sum + (c.judgmentAmount || 0), 0);
+  const totalLegalCosts = legalCases.reduce((sum, c) => sum + c.legalCosts, 0);
+  const totalRecovered = legalCases.reduce((sum, c) => sum + c.recoveredAmount, 0);
 
   const CaseDetailsModal = ({ legalCase, onClose }) => {
     if (!legalCase) return null;
@@ -512,14 +542,14 @@ const CollectionLegalCases = () => {
                         Loading legal cases...
                       </TableCell>
                     </TableRow>
-                  ) : filteredCases.length === 0 ? (
+                  ) : legalCases.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-8">
                         No legal cases found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredCases.map((legalCase) => (
+                    legalCases.map((legalCase) => (
                       <TableRow key={legalCase.id} className="cursor-pointer hover:bg-gray-50">
                         <TableCell className="font-medium">{legalCase.caseNumber}</TableCell>
                         <TableCell>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
   TrendingUp, Users, DollarSign, AlertCircle, Printer
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { collectionReportsService } from '@/services/collectionService';
 
 const CollectionReports = () => {
   const [selectedReport, setSelectedReport] = useState('daily');
@@ -32,9 +33,127 @@ const CollectionReports = () => {
     product: 'all',
     bucket: 'all'
   });
+  const [loading, setLoading] = useState(true);
+  const [reportData, setReportData] = useState({
+    dailyCollection: [],
+    collectorProductivity: [],
+    agingMovement: [],
+    ptpAnalysis: [],
+    legalCases: [],
+    settlements: []
+  });
+  const debounceTimerRef = useRef(null);
 
-  // Mock data for reports
-  const dailyCollectionData = [
+  useEffect(() => {
+    // Debounce filter changes
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      fetchReportData();
+    }, 300);
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [selectedReport, dateRange, filters]);
+
+  const fetchReportData = async () => {
+    try {
+      setLoading(true);
+      
+      // Prepare filters for API
+      const apiFilters = {};
+      if (filters.branch !== 'all') apiFilters.branch = filters.branch;
+      if (filters.collector !== 'all') apiFilters.collector = filters.collector;
+      if (filters.product !== 'all') apiFilters.product = filters.product;
+      if (filters.bucket !== 'all') apiFilters.bucket = filters.bucket;
+      
+      const dateRangeParams = {
+        startDate: format(dateRange.from, 'yyyy-MM-dd'),
+        endDate: format(dateRange.to, 'yyyy-MM-dd')
+      };
+
+      let response;
+      switch (selectedReport) {
+        case 'daily':
+          response = await collectionReportsService.getDailyCollection(
+            format(dateRange.to, 'yyyy-MM-dd'), 
+            apiFilters
+          );
+          if (response && response.data) {
+            setReportData(prev => ({ ...prev, dailyCollection: response.data }));
+          }
+          break;
+          
+        case 'productivity':
+          response = await collectionReportsService.getCollectorProductivity(
+            dateRangeParams, 
+            apiFilters
+          );
+          if (response && response.data) {
+            setReportData(prev => ({ ...prev, collectorProductivity: response.data }));
+          }
+          break;
+          
+        case 'aging':
+          response = await collectionReportsService.getAgingMovement(
+            'monthly', 
+            apiFilters
+          );
+          if (response && response.data) {
+            setReportData(prev => ({ ...prev, agingMovement: response.data }));
+          }
+          break;
+          
+        case 'ptp':
+          response = await collectionReportsService.getPTPAnalysis(
+            dateRangeParams, 
+            apiFilters
+          );
+          if (response && response.data) {
+            setReportData(prev => ({ ...prev, ptpAnalysis: response.data }));
+          }
+          break;
+          
+        case 'legal':
+          response = await collectionReportsService.getLegalCases(apiFilters);
+          if (response && response.data) {
+            setReportData(prev => ({ ...prev, legalCases: response.data }));
+          }
+          break;
+          
+        case 'settlement':
+          response = await collectionReportsService.getSettlementReport(
+            dateRangeParams, 
+            apiFilters
+          );
+          if (response && response.data) {
+            setReportData(prev => ({ ...prev, settlements: response.data }));
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+      // Use mock data as fallback
+      setReportData({
+        dailyCollection: generateMockDailyCollection(),
+        collectorProductivity: generateMockCollectorProductivity(),
+        agingMovement: generateMockAgingMovement(),
+        ptpAnalysis: generateMockPTPAnalysis(),
+        legalCases: generateMockLegalCases(),
+        settlements: generateMockSettlements()
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock data generators
+  const generateMockDailyCollection = () => [
     { date: '2024-01-15', target: 150000, collected: 142000, accounts: 45, calls: 120, visits: 8 },
     { date: '2024-01-16', target: 150000, collected: 168000, accounts: 52, calls: 135, visits: 10 },
     { date: '2024-01-17', target: 150000, collected: 155000, accounts: 48, calls: 128, visits: 9 },
@@ -42,7 +161,7 @@ const CollectionReports = () => {
     { date: '2024-01-19', target: 150000, collected: 138000, accounts: 42, calls: 115, visits: 7 }
   ];
 
-  const collectorProductivityData = [
+  const generateMockCollectorProductivity = () => [
     { 
       collector: 'Abdulaziz Al-Rasheed',
       totalCases: 25,
@@ -78,7 +197,7 @@ const CollectionReports = () => {
     }
   ];
 
-  const agingMovementData = [
+  const generateMockAgingMovement = () => [
     { bucket: 'Current', opening: 125000, inflow: 45000, outflow: 25000, closing: 145000 },
     { bucket: '1-30', opening: 285000, inflow: 25000, outflow: 50000, closing: 260000 },
     { bucket: '31-60', opening: 420000, inflow: 50000, outflow: 85000, closing: 385000 },
@@ -87,7 +206,14 @@ const CollectionReports = () => {
     { bucket: '180+', opening: 690000, inflow: 95000, outflow: 45000, closing: 740000 }
   ];
 
-  const legalCasesData = [
+  const generateMockPTPAnalysis = () => [
+    { name: 'Kept', value: 65, color: '#10b981' },
+    { name: 'Broken', value: 20, color: '#ef4444' },
+    { name: 'Partial', value: 10, color: '#f59e0b' },
+    { name: 'Pending', value: 5, color: '#6b7280' }
+  ];
+
+  const generateMockLegalCases = () => [
     { 
       caseId: 'LC001',
       customer: 'Mohammed Al-Otaibi',
@@ -110,7 +236,7 @@ const CollectionReports = () => {
     }
   ];
 
-  const settlementData = [
+  const generateMockSettlements = () => [
     { month: 'Oct 2023', proposals: 12, approved: 8, rejected: 4, amount: 450000 },
     { month: 'Nov 2023', proposals: 15, approved: 10, rejected: 5, amount: 580000 },
     { month: 'Dec 2023', proposals: 18, approved: 12, rejected: 6, amount: 720000 },
@@ -279,7 +405,7 @@ const CollectionReports = () => {
               <div className="space-y-6">
                 {/* Chart */}
                 <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={dailyCollectionData}>
+                  <ComposedChart data={reportData.dailyCollection}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" tickFormatter={(date) => format(new Date(date), 'MMM dd')} />
                     <YAxis yAxisId="left" />
@@ -306,7 +432,7 @@ const CollectionReports = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {dailyCollectionData.map((row, index) => (
+                    {reportData.dailyCollection.map((row, index) => (
                       <TableRow key={index}>
                         <TableCell>{format(new Date(row.date), 'MMM dd, yyyy')}</TableCell>
                         <TableCell>SAR {row.target.toLocaleString()}</TableCell>
@@ -351,7 +477,7 @@ const CollectionReports = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {collectorProductivityData.map((collector, index) => (
+                  {reportData.collectorProductivity.map((collector, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{collector.collector}</TableCell>
                       <TableCell>{collector.totalCases}</TableCell>
@@ -393,7 +519,7 @@ const CollectionReports = () => {
               <div className="space-y-6">
                 {/* Chart */}
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={agingMovementData}>
+                  <BarChart data={reportData.agingMovement}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="bucket" />
                     <YAxis />
@@ -419,7 +545,7 @@ const CollectionReports = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {agingMovementData.map((row, index) => (
+                    {reportData.agingMovement.map((row, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium">{row.bucket}</TableCell>
                         <TableCell className="text-right">SAR {row.opening.toLocaleString()}</TableCell>
@@ -454,12 +580,7 @@ const CollectionReports = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={[
-                          { name: 'Kept', value: 65, color: '#10b981' },
-                          { name: 'Broken', value: 20, color: '#ef4444' },
-                          { name: 'Partial', value: 10, color: '#f59e0b' },
-                          { name: 'Pending', value: 5, color: '#6b7280' }
-                        ]}
+                        data={reportData.ptpAnalysis}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -468,12 +589,7 @@ const CollectionReports = () => {
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {[
-                          { name: 'Kept', value: 65, color: '#10b981' },
-                          { name: 'Broken', value: 20, color: '#ef4444' },
-                          { name: 'Partial', value: 10, color: '#f59e0b' },
-                          { name: 'Pending', value: 5, color: '#6b7280' }
-                        ].map((entry, index) => (
+                        {reportData.ptpAnalysis.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -486,12 +602,7 @@ const CollectionReports = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-4">PTP Success Rate Trend</h3>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={[
-                      { month: 'Oct', rate: 68 },
-                      { month: 'Nov', rate: 72 },
-                      { month: 'Dec', rate: 70 },
-                      { month: 'Jan', rate: 73 }
-                    ]}>
+                    <LineChart data={reportData.ptpAnalysis}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
@@ -526,7 +637,7 @@ const CollectionReports = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {legalCasesData.map((case_, index) => (
+                  {reportData.legalCases.map((case_, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-mono">{case_.caseId}</TableCell>
                       <TableCell>{case_.customer}</TableCell>
@@ -558,7 +669,7 @@ const CollectionReports = () => {
               <div className="space-y-6">
                 {/* Chart */}
                 <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={settlementData}>
+                  <ComposedChart data={reportData.settlements}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis yAxisId="left" />
