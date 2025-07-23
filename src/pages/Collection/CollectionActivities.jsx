@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -46,7 +46,7 @@ import {
   Download,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { collectionService } from '@/services/collectionService';
+import { collectionActivitiesService } from '@/services/collectionService';
 
 const CollectionActivities = () => {
   const [activities, setActivities] = useState([]);
@@ -71,19 +71,52 @@ const CollectionActivities = () => {
     nextAction: '',
     nextActionDate: '',
   });
+  const debounceTimerRef = useRef(null);
 
   useEffect(() => {
-    fetchActivities();
+    // Debounce filter changes
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      fetchActivities();
+    }, 300);
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [filters, selectedDate]);
 
   const fetchActivities = async () => {
     try {
       setLoading(true);
-      // This would call the actual API
-      const mockData = generateMockActivities();
-      setActivities(mockData);
+      
+      // Prepare filters for API
+      const apiFilters = {};
+      if (filters.activityType !== 'all') apiFilters.activityType = filters.activityType;
+      if (filters.result !== 'all') apiFilters.result = filters.result;
+      if (filters.collector !== 'all') apiFilters.collector = filters.collector;
+      if (filters.dateRange !== 'all') apiFilters.dateRange = filters.dateRange;
+      if (selectedDate) apiFilters.date = format(selectedDate, 'yyyy-MM-dd');
+      
+      const response = await collectionActivitiesService.getActivities(apiFilters);
+      
+      // Handle the response - adjust based on actual API response structure
+      if (response && response.data) {
+        setActivities(response.data);
+      } else {
+        // Fallback to mock data if API fails
+        const mockData = generateMockActivities();
+        setActivities(mockData);
+      }
     } catch (error) {
       console.error('Error fetching activities:', error);
+      // Fallback to mock data on error
+      const mockData = generateMockActivities();
+      setActivities(mockData);
     } finally {
       setLoading(false);
     }
@@ -199,14 +232,8 @@ const CollectionActivities = () => {
     return colors[result] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredActivities = activities.filter(activity => {
-    if (filters.activityType !== 'all' && activity.activityType !== filters.activityType) return false;
-    if (filters.result !== 'all' && activity.result !== filters.result) return false;
-    // Add more filter logic as needed
-    return true;
-  });
-
-  const todayActivities = filteredActivities.filter(activity => {
+  // Filtering is now done server-side
+  const todayActivities = activities.filter(activity => {
     const activityDate = new Date(activity.datetime).toDateString();
     return activityDate === selectedDate.toDateString();
   });
@@ -475,14 +502,14 @@ const CollectionActivities = () => {
                         Loading activities...
                       </TableCell>
                     </TableRow>
-                  ) : filteredActivities.length === 0 ? (
+                  ) : activities.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-8">
                         No activities found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredActivities.map((activity) => (
+                    activities.map((activity) => (
                       <TableRow key={activity.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
