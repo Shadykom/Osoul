@@ -9,7 +9,7 @@
   },
   "build": {
     "env": {
-      "VITE_API_URL": "https://ousol-backend-dx9u.vercel.app//api/v1"
+      "VITE_API_URL": "https://ousol-backend-dx9u.vercel.app/api/v1"
     }
   },
   "rewrites": [
