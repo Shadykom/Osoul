@@ -5,6 +5,25 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Osoul Modern Reporting System - Islamic Finance Analytics</title>
+    <script>
+      // Handle ethereum provider conflicts from browser extensions
+      if (window.ethereum) {
+        console.log('Ethereum provider already exists, preserving it');
+      }
+      // Prevent errors from multiple wallet extensions trying to inject
+      Object.defineProperty(window, 'ethereum', {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return window._ethereum;
+        },
+        set(val) {
+          if (!window._ethereum) {
+            window._ethereum = val;
+          }
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
