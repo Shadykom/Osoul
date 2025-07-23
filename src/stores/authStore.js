@@ -44,7 +44,7 @@ const useAuthStore = create(
       },
 
       checkAuth: async () => {
-        const token = authService.getToken();
+        const token = authService.getAuthToken();
         if (!token) {
           set({ isAuthenticated: false, user: null });
           return false;
