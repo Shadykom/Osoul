@@ -36,7 +36,7 @@ export default function Login() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
-    mode: 'onBlur',
+    mode: 'onChange',
     reValidateMode: 'onChange',
   });
 
@@ -132,7 +132,7 @@ export default function Login() {
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="login-form">
+        <form onSubmit={handleSubmit(onSubmit)} className="login-form" noValidate>
           <div className="form-group">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -141,9 +141,12 @@ export default function Login() {
               placeholder="admin@osoul.com"
               {...register('email')}
               className={errors.email ? 'error' : ''}
+              autoComplete="email"
             />
             {errors.email && (
-              <span className="error-message">{errors.email.message}</span>
+              <span className="error-message" role="alert">
+                {errors.email.message || 'Required'}
+              </span>
             )}
           </div>
 
@@ -155,9 +158,12 @@ export default function Login() {
               placeholder="••••••••"
               {...register('password')}
               className={errors.password ? 'error' : ''}
+              autoComplete="current-password"
             />
             {errors.password && (
-              <span className="error-message">{errors.password.message}</span>
+              <span className="error-message" role="alert">
+                {errors.password.message || 'Required'}
+              </span>
             )}
           </div>
 
