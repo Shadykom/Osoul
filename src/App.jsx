@@ -4,6 +4,8 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { Calendar, TrendingUp, Users, DollarSign, FileText, Building, Activity, Download, Filter, Globe, Target, Award, Clock, ChevronRight, ChevronLeft, Menu, X, Bell, AlertCircle, Shield, BarChart2, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const OsoulReportingSystem = () => {
+  console.log('OsoulReportingSystem component is rendering');
+  
   const [activeTab, setActiveTab] = useState('dashboard');
   const [language, setLanguage] = useState('en');
   const [sidebarOpen, setSidebarOpen] = useState(true);
