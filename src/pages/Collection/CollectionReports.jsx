@@ -669,18 +669,23 @@ const CollectionReports = () => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* PTP Trend */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">PTP Success Rate Trend</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={reportData.ptpAnalysis}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="rate" stroke="#8884d8" name="Success Rate %" />
-                    </LineChart>
-                  </ResponsiveContainer>
+                {/* PTP Summary Stats */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold mb-4">PTP Summary</h3>
+                  <div className="space-y-3">
+                    {reportData.ptpAnalysis.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-4 h-4 rounded-full" 
+                            style={{ backgroundColor: item.color }}
+                          ></div>
+                          <span className="font-medium">{item.name}</span>
+                        </div>
+                        <span className="text-2xl font-bold">{item.value}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
