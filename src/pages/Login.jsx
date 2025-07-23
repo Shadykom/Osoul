@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuthStore } from '@/stores/authStore';
+import useAuthStore from '@/stores/authStore';
 import osoulLogo from '@/assets/osoul-logo.png';
 
 const loginSchema = z.object({
