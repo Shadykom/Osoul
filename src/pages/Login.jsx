@@ -5,18 +5,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Loader2, LogIn } from 'lucide-react';
-import authService from '../services/authService';
+import authService from '../services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuthStore } from '@/stores/authStore';
+import useAuthStore from '@/stores/authStore';
 import osoulLogo from '@/assets/osoul-logo.png';
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  password: z.string().min(1, 'Password is required').min(6, 'Password must be at least 6 characters'),
 });
 
 export default function Login() {
@@ -28,8 +28,12 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    clearErrors,
   } = useForm({
     resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   });
 
   const onSubmit = useCallback(async (data) => {
@@ -64,6 +68,13 @@ export default function Login() {
     { role: 'Viewer', email: 'viewer@osoul.com', password: 'password123' },
   ];
 
+  // Helper function to fill demo credentials
+  const fillDemoCredentials = (email, password) => {
+    setValue('email', email);
+    setValue('password', password);
+    clearErrors();
+  };
+
   return (
     <div className="login-container">
       <div className="login-card animate-fadeIn">
@@ -92,7 +103,7 @@ export default function Login() {
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="login-form">
+        <form onSubmit={handleSubmit(onSubmit)} className="login-form" noValidate>
           <div className="form-group">
             <Label htmlFor="email" className="form-label">
               Email
@@ -104,9 +115,12 @@ export default function Login() {
               className="form-input"
               {...register('email')}
               disabled={isLoading}
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
             />
             {errors.email && (
-              <p className="error-message">{errors.email.message}</p>
+              <p id="email-error" className="error-message">{errors.email.message}</p>
             )}
           </div>
 
@@ -121,9 +135,12 @@ export default function Login() {
               className="form-input"
               {...register('password')}
               disabled={isLoading}
+              autoComplete="current-password"
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
             />
             {errors.password && (
-              <p className="error-message">{errors.password.message}</p>
+              <p id="password-error" className="error-message">{errors.password.message}</p>
             )}
           </div>
 
@@ -151,7 +168,11 @@ export default function Login() {
           <h3 className="demo-title">DEMO CREDENTIALS</h3>
           <div className="demo-list">
             {demoCredentials.map((cred, index) => (
-              <div key={index} className="demo-item">
+              <div 
+                key={index} 
+                className="demo-item cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-1 rounded transition-colors"
+                onClick={() => fillDemoCredentials(cred.email, cred.password)}
+              >
                 <span className="demo-role">{cred.role}:</span>
                 <span className="demo-credentials-text">
                   {cred.email} / {cred.password}
