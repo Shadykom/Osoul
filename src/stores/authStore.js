@@ -1,121 +1,182 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import authService from '../services/auth.service';
+import supabaseAuth from '../services/supabaseAuth';
 
 const useAuthStore = create(
   persist(
-    (set, get) => {
-      // Initialize auth state from service
-      const initialUser = authService.getUser();
-      const initialToken = authService.getAuthToken();
-      const initialIsAuthenticated = authService.isLoggedIn();
-      
-      console.log('🏗️ authStore: Initializing with auth service state:', {
-        user: initialUser?.email,
-        hasToken: !!initialToken,
-        isAuthenticated: initialIsAuthenticated
-      });
+    (set, get) => ({
+      user: null,
+      session: null,
+      isAuthenticated: false,
+      isLoading: false,
 
-      return {
-        user: initialUser,
-        token: initialToken,
-        isAuthenticated: initialIsAuthenticated,
-        isLoading: false,
+      // Initialize auth state
+      initialize: async () => {
+        try {
+          console.log('🏗️ authStore: Initializing...');
+          const session = await supabaseAuth.getSession();
+          
+          if (session) {
+            const user = await supabaseAuth.getCurrentUser();
+            if (user) {
+              set({
+                user,
+                session,
+                isAuthenticated: true,
+              });
+              console.log('✅ authStore: Initialized with user:', user.email);
+            }
+          }
+        } catch (error) {
+          console.error('❌ authStore: Initialization error:', error);
+        }
+      },
 
+      // Login
       login: async (email, password) => {
         set({ isLoading: true });
         try {
-          const response = await authService.login(email, password);
+          const { user, session } = await supabaseAuth.login(email, password);
           set({
-            user: response.user,
-            token: response.token,
+            user,
+            session,
             isAuthenticated: true,
             isLoading: false,
           });
+          console.log('✅ authStore: Login successful:', user.email);
           return { success: true };
         } catch (error) {
           set({ isLoading: false });
+          console.error('❌ authStore: Login error:', error);
           return { 
             success: false, 
-            error: error.response?.data?.error || 'Login failed' 
+            error: error.message || 'Login failed' 
           };
         }
       },
 
-      logout: () => {
-        authService.logout();
-        set({
-          user: null,
-          token: null,
-          isAuthenticated: false,
-        });
+      // Logout
+      logout: async () => {
+        try {
+          await supabaseAuth.logout();
+          set({
+            user: null,
+            session: null,
+            isAuthenticated: false,
+          });
+          console.log('✅ authStore: Logout successful');
+        } catch (error) {
+          console.error('❌ authStore: Logout error:', error);
+        }
       },
 
+      // Update user
       updateUser: (user) => {
         set({ user });
       },
 
+      // Check authentication
       checkAuth: async () => {
         console.log('🔍 authStore.checkAuth: Starting authentication check');
-        const token = authService.getAuthToken();
-        console.log('🔍 authStore.checkAuth: Token found:', !!token);
         
-        if (!token) {
-          console.log('🔍 authStore.checkAuth: No token, setting authenticated false');
-          set({ isAuthenticated: false, user: null });
-          return false;
-        }
-
         try {
-          console.log('🔍 authStore.checkAuth: Calling getCurrentUser');
-          const user = await authService.getCurrentUser();
-          console.log('🔍 authStore.checkAuth: getCurrentUser success, user:', user?.email);
-          set({ user, isAuthenticated: true });
+          const session = await supabaseAuth.getSession();
+          
+          if (!session) {
+            console.log('🔍 authStore.checkAuth: No session found');
+            set({ isAuthenticated: false, user: null, session: null });
+            return false;
+          }
+
+          const user = await supabaseAuth.getCurrentUser();
+          
+          if (!user) {
+            console.log('🔍 authStore.checkAuth: No user found');
+            set({ isAuthenticated: false, user: null, session: null });
+            return false;
+          }
+
+          console.log('🔍 authStore.checkAuth: User authenticated:', user.email);
+          set({ user, session, isAuthenticated: true });
           return true;
         } catch (error) {
-          console.error('🔍 authStore.checkAuth: getCurrentUser failed:', error.message);
-          set({ isAuthenticated: false, user: null });
+          console.error('🔍 authStore.checkAuth: Error:', error);
+          set({ isAuthenticated: false, user: null, session: null });
           return false;
         }
       },
 
+      // Check if user has role
       hasRole: (role) => {
         const { user } = get();
         return user?.role === role;
       },
 
-              hasAnyRole: (...roles) => {
-          const { user } = get();
-          return roles.includes(user?.role);
-        },
-      };
-    },
+      // Check if user has any of the roles
+      hasAnyRole: (...roles) => {
+        const { user } = get();
+        return roles.includes(user?.role);
+      },
+
+      // Update user profile
+      updateProfile: async (updates) => {
+        const { user } = get();
+        if (!user) return { success: false, error: 'No user logged in' };
+
+        try {
+          const updatedUser = await supabaseAuth.updateUserProfile(user.id, updates);
+          set({ user: updatedUser });
+          return { success: true, user: updatedUser };
+        } catch (error) {
+          console.error('❌ authStore: Update profile error:', error);
+          return { success: false, error: error.message };
+        }
+      },
+
+      // Reset password
+      resetPassword: async (email) => {
+        try {
+          await supabaseAuth.resetPassword(email);
+          return { success: true };
+        } catch (error) {
+          console.error('❌ authStore: Reset password error:', error);
+          return { success: false, error: error.message };
+        }
+      },
+    }),
     {
       name: 'auth-storage',
       partialize: (state) => ({ 
-        user: state.user, 
-        token: state.token,
+        user: state.user,
         isAuthenticated: state.isAuthenticated 
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          console.log('🔄 authStore: Rehydrated from storage:', {
-            user: state.user?.email,
-            hasToken: !!state.token,
-            isAuthenticated: state.isAuthenticated
-          });
-          
-          // Sync auth service state with store state after rehydration
-          if (state.user && state.token && state.isAuthenticated) {
-            authService.user = state.user;
-            authService.token = state.token;
-            authService.isAuthenticated = state.isAuthenticated;
-            console.log('✅ authStore: Synced auth service with rehydrated state');
-          }
-        }
-      },
     }
   )
 );
+
+// Initialize auth on store creation
+useAuthStore.getState().initialize();
+
+// Listen to auth state changes
+supabaseAuth.onAuthStateChange(async (event, session) => {
+  console.log('🔄 Auth state changed:', event);
+  
+  if (event === 'SIGNED_IN' && session) {
+    const user = await supabaseAuth.getCurrentUser();
+    if (user) {
+      useAuthStore.setState({
+        user,
+        session,
+        isAuthenticated: true,
+      });
+    }
+  } else if (event === 'SIGNED_OUT') {
+    useAuthStore.setState({
+      user: null,
+      session: null,
+      isAuthenticated: false,
+    });
+  }
+});
 
 export default useAuthStore;

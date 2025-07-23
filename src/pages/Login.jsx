@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Loader2, LogIn } from 'lucide-react';
-import authService from '../services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,16 +39,15 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      const response = await authService.login(data.email, data.password);
+      const result = await login(data.email, data.password);
       
-      if (response.user && response.token) {
-        login(response.user, response.token);
+      if (result.success) {
         toast.success('تم تسجيل الدخول بنجاح', {
-          description: `مرحباً ${response.user.firstName}`,
+          description: `مرحباً بك`,
         });
         navigate('/dashboard');
       } else {
-        throw new Error('Invalid response format');
+        throw new Error(result.error || 'Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
