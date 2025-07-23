@@ -17,3 +17,8 @@
 {"level":"info","message":"Server running on port 5000","service":"osoul-reporting-api","timestamp":"2025-07-22 15:05:47"}
 {"level":"info","message":"Server running on port 5000","service":"osoul-reporting-api","timestamp":"2025-07-22 15:06:26"}
 {"level":"info","message":"Server running on port 5000","service":"osoul-reporting-api","timestamp":"2025-07-23 07:23:54"}
+{"level":"info","message":"Server running on port 5000","service":"osoul-reporting-api","timestamp":"2025-07-23 07:38:04"}
+{"level":"info","message":"Server running on port 5000","service":"osoul-reporting-api","timestamp":"2025-07-23 07:53:40"}
+{"ip":"::1","level":"info","message":"GET /health","service":"osoul-reporting-api","timestamp":"2025-07-23 07:53:49","userAgent":"curl/8.12.1"}
+{"ip":"::1","level":"info","message":"GET /health","service":"osoul-reporting-api","timestamp":"2025-07-23 07:53:53","userAgent":"curl/8.12.1"}
+{"ip":"::1","level":"info","message":"POST /api/v1/auth/login","service":"osoul-reporting-api","timestamp":"2025-07-23 07:53:59","userAgent":"curl/8.12.1"}
