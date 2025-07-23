@@ -1,6 +1,10 @@
 /* src/index.css */
-/* Custom styles - Tailwind is imported in App.css */
+/* Import Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* Custom CSS Variables */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -23,15 +27,252 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 45 93% 47%;
     --radius: 0.5rem;
+    
+    /* Osoul Brand Colors */
+    --osoul-primary: 45 93% 47%; /* Golden yellow from logo */
+    --osoul-secondary: 210 40% 25%; /* Dark blue from logo */
+    --osoul-accent: 142 76% 36%; /* Green from Arabic text */
+    --osoul-text: 222.2 84% 4.9%;
+    --osoul-background: 0 0% 100%;
+    --osoul-surface: 210 40% 98%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 45 93% 47%;
+    
+    /* Dark mode Osoul colors */
+    --osoul-primary: 45 93% 47%;
+    --osoul-secondary: 210 40% 98%;
+    --osoul-accent: 142 76% 36%;
+    --osoul-text: 210 40% 98%;
+    --osoul-background: 222.2 84% 4.9%;
+    --osoul-surface: 217.2 32.6% 17.5%;
   }
 }
 
+/* Base styles */
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
+  
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    line-height: 1.6;
+  }
+  
+  html {
+    scroll-behavior: smooth;
   }
 }
+
+/* Component styles */
+@layer components {
+  /* Login Page Styles */
+  .login-container {
+    @apply min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800;
+    @apply flex items-center justify-center p-4;
+  }
+  
+  .login-card {
+    @apply w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700;
+    @apply p-8 space-y-6;
+  }
+  
+  .login-header {
+    @apply text-center space-y-4;
+  }
+  
+  .login-logo {
+    @apply mx-auto w-24 h-24 object-contain;
+  }
+  
+  .login-title {
+    @apply text-2xl font-bold text-slate-900 dark:text-slate-100;
+  }
+  
+  .login-subtitle {
+    @apply text-sm text-slate-600 dark:text-slate-400;
+  }
+  
+  .login-form {
+    @apply space-y-4;
+  }
+  
+  .form-group {
+    @apply space-y-2;
+  }
+  
+  .form-label {
+    @apply text-sm font-medium text-slate-700 dark:text-slate-300;
+  }
+  
+  .form-input {
+    @apply w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600;
+    @apply bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100;
+    @apply focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500;
+    @apply transition-colors duration-200;
+    @apply placeholder:text-slate-400 dark:placeholder:text-slate-500;
+  }
+  
+  .form-input:focus {
+    @apply outline-none;
+  }
+  
+  .login-button {
+    @apply w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700;
+    @apply text-white font-semibold py-3 px-4 rounded-lg;
+    @apply transition-all duration-200 transform hover:scale-[1.02];
+    @apply focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+  }
+  
+  .login-button:disabled {
+    @apply bg-slate-400 hover:bg-slate-400;
+  }
+  
+  .demo-credentials {
+    @apply mt-6 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600;
+  }
+  
+  .demo-title {
+    @apply text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2;
+  }
+  
+  .demo-list {
+    @apply space-y-1 text-xs text-slate-600 dark:text-slate-400;
+  }
+  
+  .demo-item {
+    @apply flex justify-between;
+  }
+  
+  .demo-role {
+    @apply font-medium;
+  }
+  
+  .demo-credentials-text {
+    @apply text-slate-500 dark:text-slate-500;
+  }
+  
+  /* Error and Success Messages */
+  .error-message {
+    @apply text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20;
+    @apply border border-red-200 dark:border-red-800 rounded-lg p-3;
+  }
+  
+  .success-message {
+    @apply text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20;
+    @apply border border-green-200 dark:border-green-800 rounded-lg p-3;
+  }
+  
+  /* Loading States */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent;
+  }
+  
+  /* Arabic Text Support */
+  .arabic-text {
+    font-family: 'Amiri', 'Noto Sans Arabic', 'Arial Unicode MS', sans-serif;
+    direction: rtl;
+    text-align: right;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 640px) {
+    .login-card {
+      @apply p-6 mx-4;
+    }
+    
+    .login-title {
+      @apply text-xl;
+    }
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .bg-osoul-primary {
+    background-color: hsl(var(--osoul-primary));
+  }
+  
+  .bg-osoul-secondary {
+    background-color: hsl(var(--osoul-secondary));
+  }
+  
+  .bg-osoul-accent {
+    background-color: hsl(var(--osoul-accent));
+  }
+  
+  .text-osoul-primary {
+    color: hsl(var(--osoul-primary));
+  }
+  
+  .text-osoul-secondary {
+    color: hsl(var(--osoul-secondary));
+  }
+  
+  .text-osoul-accent {
+    color: hsl(var(--osoul-accent));
+  }
+  
+  .border-osoul-primary {
+    border-color: hsl(var(--osoul-primary));
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
