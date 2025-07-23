@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.supabase.routes.js';
 import branchRoutes from './routes/branch.routes.js';
 import collectionRoutes from './routes/collection.routes.js';
+import collectionAccountsRoutes from './routes/collection-accounts.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 
@@ -59,6 +60,7 @@ app.use((req, res, next) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/branches', branchRoutes);
 app.use('/api/v1/collection', collectionRoutes);
+app.use('/api/v1/collection', collectionAccountsRoutes);
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/dashboards', dashboardRoutes);
 

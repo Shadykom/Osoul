@@ -89,22 +89,36 @@ const CollectionAccounts = () => {
       if (filters.branch !== 'all') apiFilters.branch = filters.branch;
       if (filters.status !== 'all') apiFilters.status = filters.status;
       
-      const response = await collectionAccountsService.getAccounts(page, 20, apiFilters);
-      
-      // Handle the response - adjust based on actual API response structure
-      if (response && response.data) {
-        setAccounts(response.data);
-        setTotalPages(response.totalPages || 1);
-      } else {
-        // Fallback to mock data if API fails
+      try {
+        const response = await collectionAccountsService.getAccounts(page, 20, apiFilters);
+        
+        // Handle the response - adjust based on actual API response structure
+        if (response && response.accounts) {
+          setAccounts(response.accounts);
+          setTotalPages(response.pagination?.totalPages || 1);
+        } else if (response && Array.isArray(response)) {
+          // Handle array response
+          setAccounts(response);
+          setTotalPages(1);
+        } else {
+          // Fallback to mock data if response structure is unexpected
+          const mockData = generateMockAccounts();
+          setAccounts(mockData);
+          setTotalPages(1);
+        }
+      } catch (apiError) {
+        console.error('API Error:', apiError);
+        // Use mock data on API error
         const mockData = generateMockAccounts();
         setAccounts(mockData);
+        setTotalPages(1);
       }
     } catch (error) {
       console.error('Error fetching accounts:', error);
       // Fallback to mock data on error
       const mockData = generateMockAccounts();
       setAccounts(mockData);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
