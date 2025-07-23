@@ -11,6 +11,9 @@ import CollectionLayout from './pages/Collection';
 import CollectionDashboard from './pages/Collection/CollectionDashboard';
 import CollectionReports from './pages/Collection/CollectionReports';
 import CollectionAnalytics from './pages/Collection/CollectionAnalytics';
+import CollectionAccounts from './pages/Collection/CollectionAccounts';
+import CollectionActivities from './pages/Collection/CollectionActivities';
+import CollectionLegalCases from './pages/Collection/CollectionLegalCases';
 
 // Placeholder components
 const ComingSoon = ({ title }) => (
@@ -60,9 +63,9 @@ const AppRouter = () => {
               <Route path="dashboard" element={<CollectionDashboard />} />
               <Route path="reports" element={<CollectionReports />} />
               <Route path="analytics" element={<CollectionAnalytics />} />
-              <Route path="accounts" element={<ComingSoon title="Collection Accounts" />} />
-              <Route path="activities" element={<ComingSoon title="Collection Activities" />} />
-              <Route path="legal" element={<ComingSoon title="Legal Cases" />} />
+              <Route path="accounts" element={<CollectionAccounts />} />
+              <Route path="activities" element={<CollectionActivities />} />
+              <Route path="legal" element={<CollectionLegalCases />} />
               <Route path="settings" element={<ComingSoon title="Collection Settings" />} />
             </Route>
             
