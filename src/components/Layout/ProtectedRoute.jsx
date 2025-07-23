@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import useAuthStore from '../../stores/authStore';
 import { Loader2 } from 'lucide-react';
 
@@ -10,11 +10,15 @@ export default function ProtectedRoute({ children, roles = [] }) {
 
   useEffect(() => {
     const verifyAuth = async () => {
+      console.log('ProtectedRoute: Starting auth check');
       await checkAuth();
+      console.log('ProtectedRoute: Auth check complete, isAuthenticated:', isAuthenticated);
       setIsChecking(false);
     };
     verifyAuth();
   }, [checkAuth]);
+
+  console.log('ProtectedRoute render:', { isChecking, isAuthenticated, location: location.pathname });
 
   if (isChecking) {
     return (
@@ -25,6 +29,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
   }
 
   if (!isAuthenticated) {
+    console.log('ProtectedRoute: Not authenticated, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -32,5 +37,6 @@ export default function ProtectedRoute({ children, roles = [] }) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  return children;
+  console.log('ProtectedRoute: Rendering outlet');
+  return <Outlet />;
 }
