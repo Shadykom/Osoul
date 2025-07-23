@@ -1,79 +1,145 @@
-import api, { testConnection } from './api';
+import { apiMethods, getToken, setToken, removeToken } from './api.js';
 
 class AuthService {
+  constructor() {
+    this.user = null;
+    this.token = null;
+    this.isAuthenticated = false;
+    
+    // Initialize from stored token
+    this.initializeFromStorage();
+  }
+
+  // Initialize authentication state from localStorage
+  initializeFromStorage() {
+    try {
+      const storedToken = getToken();
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        this.token = storedToken;
+        this.user = JSON.parse(storedUser);
+        this.isAuthenticated = true;
+        console.log('✅ Auth state restored from storage:', this.user?.email);
+      } else {
+        console.log('ℹ️ No stored auth state found');
+      }
+    } catch (error) {
+      console.error('❌ Error initializing auth from storage:', error);
+      this.clearAuthState();
+    }
+  }
+
+  // Login method
   async login(email, password) {
     try {
       console.log('🔐 Attempting login for:', email);
-      console.log('🌐 API Base URL:', api.defaults.baseURL);
-      
+      console.log('🌐 API Base URL:', import.meta.env.VITE_API_URL || 'fallback URL');
+
       // Test connection first
-      const connectionTest = await testConnection();
-      if (!connectionTest.success) {
+      console.log('🔍 Testing API connection...');
+      const connectionTest = await apiMethods.testConnection?.();
+      if (connectionTest && !connectionTest.success) {
         throw new Error(`Backend connection failed: ${connectionTest.error}`);
       }
+      console.log('✅ Connection test passed');
+
+      // Attempt login
+      const response = await apiMethods.login({ email, password });
       
-      const response = await api.post('/auth/login', { email, password });
-      const { user, token } = response.data;
-      
-      // Store token and user info
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      console.log('✅ Login successful for:', user.email);
-      return { user, token };
+      if (response.user && response.token) {
+        // Store authentication data
+        this.user = response.user;
+        this.token = response.token;
+        this.isAuthenticated = true;
+        
+        // Persist to localStorage
+        setToken(response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        
+        console.log('✅ Login successful for:', response.user.email);
+        console.log('👤 User role:', response.user.role);
+        
+        return {
+          success: true,
+          user: response.user,
+          token: response.token,
+          message: response.message
+        };
+      } else {
+        throw new Error('Invalid response format from server');
+      }
     } catch (error) {
       console.error('❌ Login failed:', error);
+      this.clearAuthState();
       
       // Provide user-friendly error messages
-      if (error.response?.status === 401) {
-        throw new Error('Invalid email or password');
-      } else if (error.response?.status === 429) {
-        throw new Error('Too many login attempts. Please try again later.');
-      } else if (error.code === 'ERR_NETWORK') {
-        throw new Error('Unable to connect to server. Please check your internet connection.');
-      } else if (error.message.includes('Backend connection failed')) {
-        throw error; // Re-throw connection errors as-is
-      } else {
-        throw new Error(error.response?.data?.message || 'Login failed. Please try again.');
+      let errorMessage = 'Login failed';
+      
+      if (error.message.includes('Backend connection failed')) {
+        errorMessage = 'Unable to connect to server. Please try again later.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.message.includes('Network Error')) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
       }
+      
+      throw new Error(errorMessage);
     }
   }
 
-  async register(userData) {
-    try {
-      console.log('📝 Attempting registration for:', userData.email);
-      
-      const response = await api.post('/auth/register', userData);
-      const { user, token } = response.data;
-      
-      // Store token and user info
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      console.log('✅ Registration successful for:', user.email);
-      return { user, token };
-    } catch (error) {
-      console.error('❌ Registration failed:', error);
-      
-      if (error.response?.status === 409) {
-        throw new Error('Email already exists');
-      } else if (error.response?.status === 400) {
-        throw new Error(error.response.data.message || 'Invalid registration data');
-      } else {
-        throw new Error('Registration failed. Please try again.');
-      }
+  // Logout method
+  logout() {
+    console.log('👋 Logging out user:', this.user?.email);
+    this.clearAuthState();
+    apiMethods.logout();
+    
+    // Redirect to login page
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
     }
   }
 
+  // Clear authentication state
+  clearAuthState() {
+    this.user = null;
+    this.token = null;
+    this.isAuthenticated = false;
+    
+    // Clear localStorage
+    removeToken();
+    localStorage.removeItem('user');
+    
+    console.log('🗑️ Auth state cleared');
+  }
+
+  // Get current user
   async getCurrentUser() {
     try {
-      const response = await api.get('/auth/me');
-      return response.data.user;
-    } catch (error) {
-      console.error('❌ Get current user failed:', error);
+      if (!this.isAuthenticated || !this.token) {
+        throw new Error('Not authenticated');
+      }
+
+      console.log('👤 Fetching current user data');
+      const response = await apiMethods.getCurrentUser();
       
-      // If unauthorized, clear stored data
+      if (response.user) {
+        this.user = response.user;
+        localStorage.setItem('user', JSON.stringify(response.user));
+        console.log('✅ Current user data updated');
+        return response.user;
+      }
+      
+      throw new Error('Invalid user data received');
+    } catch (error) {
+      console.error('❌ Error getting current user:', error);
+      
       if (error.response?.status === 401) {
+        console.log('🚨 Token expired or invalid, logging out');
         this.logout();
       }
       
@@ -81,51 +147,69 @@ class AuthService {
     }
   }
 
-  logout() {
-    console.log('👋 Logging out user');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+  // Check if user is authenticated
+  isLoggedIn() {
+    const hasToken = !!getToken();
+    const hasUser = !!this.user;
+    const isAuth = this.isAuthenticated;
+    
+    console.log('🔍 Auth check:', { hasToken, hasUser, isAuth });
+    
+    return hasToken && hasUser && isAuth;
   }
 
-  getCurrentUserFromStorage() {
+  // Get user info
+  getUser() {
+    return this.user;
+  }
+
+  // Get token
+  getAuthToken() {
+    return this.token || getToken();
+  }
+
+  // Check if user has specific role
+  hasRole(role) {
+    return this.user?.role === role;
+  }
+
+  // Check if user has any of the specified roles
+  hasAnyRole(roles) {
+    return roles.includes(this.user?.role);
+  }
+
+  // Refresh token (if needed in the future)
+  async refreshToken() {
     try {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
+      // This would be implemented if your backend supports token refresh
+      console.log('🔄 Token refresh not implemented yet');
+      return false;
     } catch (error) {
-      console.error('❌ Error parsing user from storage:', error);
-      return null;
+      console.error('❌ Token refresh failed:', error);
+      this.logout();
+      return false;
     }
   }
 
-  getToken() {
-    return localStorage.getItem('authToken');
-  }
-
-  isAuthenticated() {
-    const token = this.getToken();
-    const user = this.getCurrentUserFromStorage();
-    return !!(token && user);
-  }
-
-  // Test backend connectivity
-  async testBackendConnection() {
+  // Validate current session
+  async validateSession() {
     try {
-      console.log('🔍 Testing backend connection...');
-      const result = await testConnection();
-      
-      if (result.success) {
-        console.log('✅ Backend is reachable');
-        return true;
-      } else {
-        console.error('❌ Backend is not reachable:', result.error);
+      if (!this.isLoggedIn()) {
         return false;
       }
+
+      // Try to get current user to validate token
+      await this.getCurrentUser();
+      return true;
     } catch (error) {
-      console.error('❌ Backend connection test failed:', error);
+      console.error('❌ Session validation failed:', error);
       return false;
     }
   }
 }
 
-export default new AuthService();
+// Create and export singleton instance
+const authService = new AuthService();
+
+export default authService;
 

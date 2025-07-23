@@ -1,296 +1,275 @@
-import axios from 'axios';
+import { apiMethods } from './api.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+class CollectionService {
+  constructor() {
+    console.log('📋 Collection Service initialized');
+  }
 
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add auth token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  // Get collection accounts with pagination and filtering
+  async getAccounts(params = {}) {
+    try {
+      console.log('📋 Fetching collection accounts with params:', params);
+      
+      // Default parameters
+      const defaultParams = {
+        page: 1,
+        limit: 20,
+        sortBy: 'created_date',
+        sortOrder: 'desc'
+      };
+      
+      const queryParams = { ...defaultParams, ...params };
+      console.log('📋 Final query params:', queryParams);
+      
+      const response = await apiMethods.getCollectionAccounts(queryParams);
+      
+      if (response.success && response.data) {
+        console.log('✅ Collection accounts fetched successfully:', {
+          total: response.data.pagination?.totalRecords,
+          returned: response.data.accounts?.length,
+          page: response.data.pagination?.currentPage
+        });
+        
+        return {
+          success: true,
+          accounts: response.data.accounts || [],
+          pagination: response.data.pagination || {},
+          summary: response.data.summary || {},
+          message: response.message
+        };
+      } else {
+        throw new Error(response.message || 'Failed to fetch collection accounts');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching collection accounts:', error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to load collection accounts';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access denied. You do not have permission to view collection accounts.';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message.includes('Network Error')) {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
+      throw new Error(errorMessage);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
   }
-);
 
-// Collection Dashboard Services
-export const collectionDashboardService = {
-  // Get dashboard summary metrics
-  getSummaryMetrics: async (filters = {}) => {
-    const response = await api.get('/collection/dashboard/summary', { params: filters });
-    return response.data;
-  },
-
-  // Get collection trends
-  getCollectionTrends: async (period, filters = {}) => {
-    const response = await api.get(`/collection/dashboard/trends/${period}`, { params: filters });
-    return response.data;
-  },
-
-  // Get aging analysis
-  getAgingAnalysis: async (filters = {}) => {
-    const response = await api.get('/collection/dashboard/aging', { params: filters });
-    return response.data;
-  },
-
-  // Get collector performance
-  getCollectorPerformance: async (filters = {}) => {
-    const response = await api.get('/collection/dashboard/collector-performance', { params: filters });
-    return response.data;
-  },
-
-  // Get product-wise NPF
-  getProductNPF: async (filters = {}) => {
-    const response = await api.get('/collection/dashboard/product-npf', { params: filters });
-    return response.data;
+  // Get specific collection account details
+  async getAccount(accountId) {
+    try {
+      console.log('🔍 Fetching collection account details for ID:', accountId);
+      
+      if (!accountId) {
+        throw new Error('Account ID is required');
+      }
+      
+      const response = await apiMethods.getCollectionAccount(accountId);
+      
+      if (response.success && response.data) {
+        console.log('✅ Collection account details fetched successfully');
+        
+        return {
+          success: true,
+          account: response.data,
+          message: response.message
+        };
+      } else {
+        throw new Error(response.message || 'Failed to fetch account details');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching collection account details:', error);
+      
+      let errorMessage = 'Failed to load account details';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access denied. You do not have permission to view this account.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Account not found.';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      throw new Error(errorMessage);
+    }
   }
-};
 
-// Collection Reports Services
-export const collectionReportsService = {
   // Get daily collection report
-  getDailyCollection: async (date, filters = {}) => {
-    const response = await api.get('/collection/reports/daily', { 
-      params: { date, ...filters } 
-    });
-    return response.data;
-  },
-
-  // Get collector productivity report
-  getCollectorProductivity: async (dateRange, filters = {}) => {
-    const response = await api.get('/collection/reports/productivity', { 
-      params: { ...dateRange, ...filters } 
-    });
-    return response.data;
-  },
-
-  // Get aging movement report
-  getAgingMovement: async (period, filters = {}) => {
-    const response = await api.get('/collection/reports/aging-movement', { 
-      params: { period, ...filters } 
-    });
-    return response.data;
-  },
-
-  // Get PTP analysis report
-  getPTPAnalysis: async (dateRange, filters = {}) => {
-    const response = await api.get('/collection/reports/ptp-analysis', { 
-      params: { ...dateRange, ...filters } 
-    });
-    return response.data;
-  },
-
-  // Get legal cases report
-  getLegalCases: async (filters = {}) => {
-    const response = await api.get('/collection/reports/legal-cases', { params: filters });
-    return response.data;
-  },
-
-  // Get settlement report
-  getSettlementReport: async (dateRange, filters = {}) => {
-    const response = await api.get('/collection/reports/settlements', { 
-      params: { ...dateRange, ...filters } 
-    });
-    return response.data;
-  },
-
-  // Export report
-  exportReport: async (reportType, format, filters = {}) => {
-    const response = await api.get(`/collection/reports/export/${reportType}`, {
-      params: { format, ...filters },
-      responseType: 'blob'
-    });
-    return response.data;
+  async getDailyReport(params = {}) {
+    try {
+      console.log('📊 Fetching daily collection report with params:', params);
+      
+      // Default to today's date if not specified
+      const defaultParams = {
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      const queryParams = { ...defaultParams, ...params };
+      console.log('📊 Final report params:', queryParams);
+      
+      const response = await apiMethods.getDailyReport(queryParams);
+      
+      if (response.success && response.data) {
+        console.log('✅ Daily collection report fetched successfully:', {
+          date: response.data.date,
+          activities: response.data.summary?.totalActivities,
+          payments: response.data.summary?.totalPayments,
+          amount: response.data.summary?.totalAmountCollected
+        });
+        
+        return {
+          success: true,
+          report: response.data,
+          message: response.message
+        };
+      } else {
+        throw new Error(response.message || 'Failed to fetch daily report');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching daily collection report:', error);
+      
+      let errorMessage = 'Failed to load daily report';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access denied. You do not have permission to view reports.';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      throw new Error(errorMessage);
+    }
   }
-};
 
-// Collection Analytics Services
-export const collectionAnalyticsService = {
-  // Get performance trends
-  getPerformanceTrends: async (period, metrics, filters = {}) => {
-    const response = await api.get('/collection/analytics/trends', { 
-      params: { period, metrics, ...filters } 
-    });
-    return response.data;
-  },
-
-  // Get risk segmentation
-  getRiskSegmentation: async (filters = {}) => {
-    const response = await api.get('/collection/analytics/risk-segmentation', { params: filters });
-    return response.data;
-  },
-
-  // Get behavioral analysis
-  getBehavioralAnalysis: async (filters = {}) => {
-    const response = await api.get('/collection/analytics/behavioral', { params: filters });
-    return response.data;
-  },
-
-  // Get predictive insights
-  getPredictiveInsights: async (filters = {}) => {
-    const response = await api.get('/collection/analytics/predictive', { params: filters });
-    return response.data;
-  },
-
-  // Get recovery probability
-  getRecoveryProbability: async (filters = {}) => {
-    const response = await api.get('/collection/analytics/recovery-probability', { params: filters });
-    return response.data;
+  // Search collection accounts
+  async searchAccounts(searchTerm, filters = {}) {
+    try {
+      console.log('🔍 Searching collection accounts:', { searchTerm, filters });
+      
+      const params = {
+        search: searchTerm,
+        ...filters
+      };
+      
+      return await this.getAccounts(params);
+    } catch (error) {
+      console.error('❌ Error searching collection accounts:', error);
+      throw error;
+    }
   }
-};
 
-// Collection Accounts Services
-export const collectionAccountsService = {
-  // Get accounts list
-  getAccounts: async (page = 1, limit = 20, filters = {}) => {
-    const response = await api.get('/collection/accounts', { 
-      params: { page, limit, ...filters } 
-    });
-    return response.data;
-  },
-
-  // Get account details
-  getAccountDetails: async (accountId) => {
-    const response = await api.get(`/collection/accounts/${accountId}`);
-    return response.data;
-  },
-
-  // Update account status
-  updateAccountStatus: async (accountId, status) => {
-    const response = await api.patch(`/collection/accounts/${accountId}/status`, { status });
-    return response.data;
-  },
-
-  // Assign collector
-  assignCollector: async (accountId, collectorId) => {
-    const response = await api.post(`/collection/accounts/${accountId}/assign`, { collectorId });
-    return response.data;
+  // Filter accounts by status
+  async getAccountsByStatus(status, params = {}) {
+    try {
+      console.log('📋 Fetching accounts by status:', status);
+      
+      const queryParams = {
+        status,
+        ...params
+      };
+      
+      return await this.getAccounts(queryParams);
+    } catch (error) {
+      console.error('❌ Error fetching accounts by status:', error);
+      throw error;
+    }
   }
-};
 
-// Collection Activities Services
-export const collectionActivitiesService = {
-  // Get activities list
-  getActivities: async (filters = {}) => {
-    const response = await api.get('/collection/activities', { params: filters });
-    return response.data;
-  },
-
-  // Create new activity
-  createActivity: async (activityData) => {
-    const response = await api.post('/collection/activities', activityData);
-    return response.data;
-  },
-
-  // Update activity
-  updateActivity: async (activityId, activityData) => {
-    const response = await api.put(`/collection/activities/${activityId}`, activityData);
-    return response.data;
-  },
-
-  // Get activity types
-  getActivityTypes: async () => {
-    const response = await api.get('/collection/activities/types');
-    return response.data;
+  // Get collection statistics
+  async getCollectionStats(params = {}) {
+    try {
+      console.log('📈 Fetching collection statistics');
+      
+      // This could be expanded to call a dedicated stats endpoint
+      const accountsResponse = await this.getAccounts({ limit: 1, ...params });
+      
+      if (accountsResponse.success) {
+        return {
+          success: true,
+          stats: accountsResponse.summary,
+          message: 'Statistics retrieved successfully'
+        };
+      } else {
+        throw new Error('Failed to fetch statistics');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching collection statistics:', error);
+      throw error;
+    }
   }
-};
 
-// Promise to Pay Services
-export const ptpService = {
-  // Get PTP list
-  getPTPs: async (filters = {}) => {
-    const response = await api.get('/collection/ptp', { params: filters });
-    return response.data;
-  },
-
-  // Create PTP
-  createPTP: async (ptpData) => {
-    const response = await api.post('/collection/ptp', ptpData);
-    return response.data;
-  },
-
-  // Update PTP status
-  updatePTPStatus: async (ptpId, status, paymentData = {}) => {
-    const response = await api.patch(`/collection/ptp/${ptpId}/status`, { 
-      status, 
-      ...paymentData 
-    });
-    return response.data;
+  // Format currency for display
+  formatCurrency(amount) {
+    try {
+      return new Intl.NumberFormat('ar-SA', {
+        style: 'currency',
+        currency: 'SAR'
+      }).format(amount || 0);
+    } catch (error) {
+      console.error('❌ Error formatting currency:', error);
+      return `SAR ${amount || 0}`;
+    }
   }
-};
 
-// Legal Cases Services
-export const legalCasesService = {
-  // Get legal cases
-  getLegalCases: async (filters = {}) => {
-    const response = await api.get('/collection/legal-cases', { params: filters });
-    return response.data;
-  },
-
-  // Get case details
-  getCaseDetails: async (caseId) => {
-    const response = await api.get(`/collection/legal-cases/${caseId}`);
-    return response.data;
-  },
-
-  // Create legal case
-  createLegalCase: async (caseData) => {
-    const response = await api.post('/collection/legal-cases', caseData);
-    return response.data;
-  },
-
-  // Update case status
-  updateCaseStatus: async (caseId, status, updateData = {}) => {
-    const response = await api.patch(`/collection/legal-cases/${caseId}/status`, { 
-      status, 
-      ...updateData 
-    });
-    return response.data;
+  // Calculate days overdue
+  calculateDaysOverdue(lastPaymentDate) {
+    try {
+      if (!lastPaymentDate) return 0;
+      
+      const today = new Date();
+      const lastPayment = new Date(lastPaymentDate);
+      const diffTime = today - lastPayment;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      return Math.max(0, diffDays);
+    } catch (error) {
+      console.error('❌ Error calculating days overdue:', error);
+      return 0;
+    }
   }
-};
 
-// Settlement Services
-export const settlementService = {
-  // Get settlements
-  getSettlements: async (filters = {}) => {
-    const response = await api.get('/collection/settlements', { params: filters });
-    return response.data;
-  },
-
-  // Create settlement proposal
-  createSettlement: async (settlementData) => {
-    const response = await api.post('/collection/settlements', settlementData);
-    return response.data;
-  },
-
-  // Approve/Reject settlement
-  updateSettlementStatus: async (settlementId, status, remarks = '') => {
-    const response = await api.patch(`/collection/settlements/${settlementId}/status`, { 
-      status, 
-      remarks 
-    });
-    return response.data;
+  // Get status badge color
+  getStatusBadgeColor(status) {
+    const statusColors = {
+      'new': 'blue',
+      'in_progress': 'yellow',
+      'resolved': 'green',
+      'closed': 'gray',
+      'escalated': 'red'
+    };
+    
+    return statusColors[status?.toLowerCase()] || 'gray';
   }
-};
 
-export default {
-  dashboard: collectionDashboardService,
-  reports: collectionReportsService,
-  analytics: collectionAnalyticsService,
-  accounts: collectionAccountsService,
-  activities: collectionActivitiesService,
-  ptp: ptpService,
-  legal: legalCasesService,
-  settlement: settlementService
-};
+  // Get priority badge color
+  getPriorityBadgeColor(priority) {
+    const priorityColors = {
+      'low': 'green',
+      'medium': 'yellow',
+      'high': 'orange',
+      'urgent': 'red'
+    };
+    
+    return priorityColors[priority?.toLowerCase()] || 'gray';
+  }
+}
+
+// Create and export singleton instance
+const collectionService = new CollectionService();
+
+export default collectionService;
+
