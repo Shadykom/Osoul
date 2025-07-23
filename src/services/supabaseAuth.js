@@ -41,15 +41,26 @@ export const supabaseAuth = {
             .single();
 
           if (createError) throw createError;
-          return { user: newProfile, session: data.session };
+          return { 
+            success: true, 
+            user: newProfile, 
+            session: data.session 
+          };
         }
         throw profileError;
       }
 
-      return { user: userProfile, session: data.session };
+      return { 
+        success: true, 
+        user: userProfile, 
+        session: data.session 
+      };
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      return {
+        success: false,
+        error: error.message || 'Login failed'
+      };
     }
   },
 

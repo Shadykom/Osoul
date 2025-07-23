@@ -16,6 +16,7 @@ import CollectionAnalytics from './pages/Collection/CollectionAnalytics';
 import CollectionAccounts from './pages/Collection/CollectionAccounts';
 import CollectionActivities from './pages/Collection/CollectionActivities';
 import CollectionLegalCases from './pages/Collection/CollectionLegalCases';
+import SetupUsers from './pages/SetupUsers';
 
 // Placeholder components
 const ComingSoon = ({ title }) => (
@@ -52,6 +53,9 @@ const AppRouter = () => {
           {/* Test route */}
           <Route path="/test" element={<TestPage />} />
           
+          {/* Setup page - accessible without authentication */}
+          <Route path="/setup-users" element={<SetupUsers />} />
+
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           
