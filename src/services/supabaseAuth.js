@@ -4,10 +4,12 @@ export const supabaseAuth = {
   // Login with email and password
   async login(email, password) {
     try {
+      console.log('supabaseAuth.login: Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      console.log('supabaseAuth.login: Auth response:', { data, error });
 
       if (error) throw error;
 

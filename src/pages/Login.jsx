@@ -36,15 +36,20 @@ export default function Login() {
   });
 
   const onSubmit = useCallback(async (data) => {
+    console.log('Login form submitted with:', data);
     setIsLoading(true);
     
     try {
+      console.log('Calling login function...');
       const result = await login(data.email, data.password);
+      console.log('Login result:', result);
       
       if (result.success) {
+        console.log('Login successful, showing toast...');
         toast.success('تم تسجيل الدخول بنجاح', {
           description: `مرحباً بك`,
         });
+        console.log('Navigating to dashboard...');
         navigate('/dashboard');
       } else {
         throw new Error(result.error || 'Login failed');
@@ -71,6 +76,27 @@ export default function Login() {
     setValue('email', email);
     setValue('password', password);
     clearErrors();
+  };
+
+  // Test function to bypass form validation
+  const testLogin = async () => {
+    console.log('Test login clicked');
+    setIsLoading(true);
+    try {
+      const result = await login('admin@osoul.com', 'password123');
+      console.log('Test login result:', result);
+      if (result.success) {
+        toast.success('Test login successful!');
+        navigate('/dashboard');
+      } else {
+        toast.error('Test login failed: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Test login error:', error);
+      toast.error('Test login error: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -158,6 +184,17 @@ export default function Login() {
                 Sign in
               </>
             )}
+          </Button>
+          
+          {/* Test button to verify click events */}
+          <Button
+            type="button"
+            onClick={testLogin}
+            className="mt-2 w-full"
+            variant="outline"
+            disabled={isLoading}
+          >
+            Test Direct Login (admin@osoul.com)
           </Button>
         </form>
 
