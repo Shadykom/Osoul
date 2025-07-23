@@ -1,182 +1,274 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import supabaseAuth from '../services/supabaseAuth';
+import { supabaseAuth } from '@/services/supabaseAuth';
 
 const useAuthStore = create(
   persist(
     (set, get) => ({
+      // State
       user: null,
       session: null,
       isAuthenticated: false,
       isLoading: false,
+      error: null,
 
-      // Initialize auth state
-      initialize: async () => {
+      // Actions
+      login: async (email, password) => {
+        console.log('🔐 authStore.login: Starting login process for:', email);
+        set({ isLoading: true, error: null });
+
         try {
-          console.log('🏗️ authStore: Initializing...');
-          const session = await supabaseAuth.getSession();
+          const result = await supabaseAuth.login(email, password);
           
-          if (session) {
-            const user = await supabaseAuth.getCurrentUser();
-            if (user) {
-              set({
-                user,
-                session,
-                isAuthenticated: true,
-              });
-              console.log('✅ authStore: Initialized with user:', user.email);
-            }
+          if (result.success) {
+            console.log('✅ authStore.login: Login successful, updating store');
+            set({
+              user: result.user,
+              session: result.session,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+            
+            return { success: true, user: result.user };
+          } else {
+            console.error('❌ authStore.login: Login failed:', result.error);
+            set({
+              user: null,
+              session: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: result.error,
+            });
+            
+            return { success: false, error: result.error };
           }
         } catch (error) {
-          console.error('❌ authStore: Initialization error:', error);
-        }
-      },
-
-      // Login
-      login: async (email, password) => {
-        set({ isLoading: true });
-        try {
-          const { user, session } = await supabaseAuth.login(email, password);
-          set({
-            user,
-            session,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          console.log('✅ authStore: Login successful:', user.email);
-          return { success: true };
-        } catch (error) {
-          set({ isLoading: false });
-          console.error('❌ authStore: Login error:', error);
-          return { 
-            success: false, 
-            error: error.message || 'Login failed' 
-          };
-        }
-      },
-
-      // Logout
-      logout: async () => {
-        try {
-          await supabaseAuth.logout();
+          console.error('❌ authStore.login: Unexpected error:', error);
           set({
             user: null,
             session: null,
             isAuthenticated: false,
+            isLoading: false,
+            error: error.message,
           });
-          console.log('✅ authStore: Logout successful');
-        } catch (error) {
-          console.error('❌ authStore: Logout error:', error);
+          
+          return { success: false, error: error.message };
         }
       },
 
-      // Update user
-      updateUser: (user) => {
-        set({ user });
+      logout: async () => {
+        console.log('👋 authStore.logout: Starting logout process');
+        set({ isLoading: true });
+
+        try {
+          const result = await supabaseAuth.logout();
+          
+          console.log('✅ authStore.logout: Logout completed, clearing store');
+          set({
+            user: null,
+            session: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          });
+          
+          return { success: true };
+        } catch (error) {
+          console.error('❌ authStore.logout: Error during logout:', error);
+          set({ isLoading: false, error: error.message });
+          return { success: false, error: error.message };
+        }
       },
 
-      // Check authentication
-      checkAuth: async () => {
-        console.log('🔍 authStore.checkAuth: Starting authentication check');
-        
+      getCurrentUser: async () => {
+        console.log('👤 authStore.getCurrentUser: Fetching current user');
+        set({ isLoading: true, error: null });
+
+        try {
+          const result = await supabaseAuth.getCurrentUser();
+          
+          if (result.success) {
+            console.log('✅ authStore.getCurrentUser: User retrieved successfully');
+            set({
+              user: result.user,
+              session: result.session,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+            
+            return { success: true, user: result.user };
+          } else {
+            console.log('ℹ️ authStore.getCurrentUser: No authenticated user');
+            set({
+              user: null,
+              session: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            });
+            
+            return { success: false, error: result.error };
+          }
+        } catch (error) {
+          console.error('❌ authStore.getCurrentUser: Error:', error);
+          set({
+            user: null,
+            session: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: error.message,
+          });
+          
+          return { success: false, error: error.message };
+        }
+      },
+
+      // Initialize auth state from Supabase session
+      initializeAuth: async () => {
+        console.log('🔄 authStore.initializeAuth: Initializing auth state');
+        set({ isLoading: true, error: null });
+
         try {
           const session = await supabaseAuth.getSession();
           
-          if (!session) {
-            console.log('🔍 authStore.checkAuth: No session found');
-            set({ isAuthenticated: false, user: null, session: null });
-            return false;
+          if (session) {
+            console.log('✅ authStore.initializeAuth: Found existing session');
+            const result = await supabaseAuth.getCurrentUser();
+            
+            if (result.success) {
+              set({
+                user: result.user,
+                session: result.session,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null,
+              });
+              
+              console.log('✅ authStore.initializeAuth: Auth state restored');
+              return { success: true, user: result.user };
+            }
           }
-
-          const user = await supabaseAuth.getCurrentUser();
           
-          if (!user) {
-            console.log('🔍 authStore.checkAuth: No user found');
-            set({ isAuthenticated: false, user: null, session: null });
-            return false;
-          }
-
-          console.log('🔍 authStore.checkAuth: User authenticated:', user.email);
-          set({ user, session, isAuthenticated: true });
-          return true;
+          console.log('ℹ️ authStore.initializeAuth: No existing session');
+          set({
+            user: null,
+            session: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          });
+          
+          return { success: false, error: 'No session found' };
         } catch (error) {
-          console.error('🔍 authStore.checkAuth: Error:', error);
-          set({ isAuthenticated: false, user: null, session: null });
-          return false;
+          console.error('❌ authStore.initializeAuth: Error:', error);
+          set({
+            user: null,
+            session: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: error.message,
+          });
+          
+          return { success: false, error: error.message };
         }
       },
 
-      // Check if user has role
+      // Clear error
+      clearError: () => {
+        set({ error: null });
+      },
+
+      // Set loading state
+      setLoading: (loading) => {
+        set({ isLoading: loading });
+      },
+
+      // Check if user has specific role
       hasRole: (role) => {
         const { user } = get();
         return user?.role === role;
       },
 
-      // Check if user has any of the roles
-      hasAnyRole: (...roles) => {
+      // Check if user has any of the specified roles
+      hasAnyRole: (roles) => {
         const { user } = get();
         return roles.includes(user?.role);
       },
 
-      // Update user profile
-      updateProfile: async (updates) => {
+      // Get user permissions based on role
+      getPermissions: () => {
         const { user } = get();
-        if (!user) return { success: false, error: 'No user logged in' };
+        if (!user) return [];
 
-        try {
-          const updatedUser = await supabaseAuth.updateUserProfile(user.id, updates);
+        const rolePermissions = {
+          admin: ['read', 'write', 'delete', 'manage_users', 'view_reports', 'manage_settings'],
+          manager: ['read', 'write', 'view_reports', 'manage_team'],
+          collector: ['read', 'write', 'update_cases'],
+          viewer: ['read'],
+        };
+
+        return rolePermissions[user.role] || [];
+      },
+
+      // Check if user has specific permission
+      hasPermission: (permission) => {
+        const permissions = get().getPermissions();
+        return permissions.includes(permission);
+      },
+
+      // Update user profile
+      updateUser: (userData) => {
+        const { user } = get();
+        if (user) {
+          const updatedUser = { ...user, ...userData };
           set({ user: updatedUser });
-          return { success: true, user: updatedUser };
-        } catch (error) {
-          console.error('❌ authStore: Update profile error:', error);
-          return { success: false, error: error.message };
+          console.log('✅ authStore.updateUser: User profile updated');
         }
       },
 
-      // Reset password
-      resetPassword: async (email) => {
-        try {
-          await supabaseAuth.resetPassword(email);
-          return { success: true };
-        } catch (error) {
-          console.error('❌ authStore: Reset password error:', error);
-          return { success: false, error: error.message };
-        }
+      // Set up auth state listener
+      setupAuthListener: () => {
+        console.log('👂 authStore.setupAuthListener: Setting up auth state listener');
+        
+        return supabaseAuth.onAuthStateChange((event, session) => {
+          console.log('🔄 authStore: Auth state changed:', event);
+          
+          if (event === 'SIGNED_IN' && session) {
+            console.log('✅ authStore: User signed in, updating state');
+            get().getCurrentUser();
+          } else if (event === 'SIGNED_OUT') {
+            console.log('👋 authStore: User signed out, clearing state');
+            set({
+              user: null,
+              session: null,
+              isAuthenticated: false,
+              error: null,
+            });
+          } else if (event === 'TOKEN_REFRESHED' && session) {
+            console.log('🔄 authStore: Token refreshed, updating session');
+            set({ session });
+          }
+        });
       },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated 
+        isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        console.log('💾 authStore: Rehydrating from storage');
+        if (state?.isAuthenticated) {
+          console.log('🔄 authStore: Found stored auth state, initializing...');
+          state.initializeAuth();
+        }
+      },
     }
   )
 );
 
-// Initialize auth on store creation
-useAuthStore.getState().initialize();
+export { useAuthStore };
 
-// Listen to auth state changes
-supabaseAuth.onAuthStateChange(async (event, session) => {
-  console.log('🔄 Auth state changed:', event);
-  
-  if (event === 'SIGNED_IN' && session) {
-    const user = await supabaseAuth.getCurrentUser();
-    if (user) {
-      useAuthStore.setState({
-        user,
-        session,
-        isAuthenticated: true,
-      });
-    }
-  } else if (event === 'SIGNED_OUT') {
-    useAuthStore.setState({
-      user: null,
-      session: null,
-      isAuthenticated: false,
-    });
-  }
-});
-
-export default useAuthStore;
