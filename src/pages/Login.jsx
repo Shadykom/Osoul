@@ -10,9 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import useAuthStore from '@/stores/authStore';
+// FIXED: Changed from default import to named import
+import { useAuthStore } from '@/stores/authStore';
 import osoulLogo from '@/assets/osoul-logo.png';
 
+// Import Supabase authentication service
+import { supabaseAuth } from '@/services/supabaseAuth';
+
+// Validation schema
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
   password: z.string().min(1, 'Password is required').min(6, 'Password must be at least 6 characters'),
@@ -26,9 +31,9 @@ export default function Login() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
     setValue,
     clearErrors,
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
     mode: 'onBlur',
@@ -36,26 +41,30 @@ export default function Login() {
   });
 
   const onSubmit = useCallback(async (data) => {
-    console.log('Login form submitted with:', data);
+    console.log('🔐 Login form submitted with:', { email: data.email });
     setIsLoading(true);
-    
+
     try {
-      console.log('Calling login function...');
-      const result = await login(data.email, data.password);
-      console.log('Login result:', result);
+      console.log('🔍 Calling Supabase authentication...');
       
+      // Use Supabase authentication directly
+      const result = await supabaseAuth.login(data.email, data.password);
+      
+      console.log('✅ Supabase login result:', result);
+
       if (result.success) {
-        console.log('Login successful, showing toast...');
+        console.log('✅ Login successful, showing toast...');
         toast.success('تم تسجيل الدخول بنجاح', {
-          description: `مرحباً بك`,
+          description: 'مرحباً بك',
         });
-        console.log('Navigating to dashboard...');
+        
+        console.log('🔄 Navigating to dashboard...');
         navigate('/dashboard');
       } else {
         throw new Error(result.error || 'Login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       toast.error('خطأ في تسجيل الدخول', {
         description: error.message || 'يرجى التحقق من البيانات والمحاولة مرة أخرى',
       });
@@ -64,6 +73,7 @@ export default function Login() {
     }
   }, [login, navigate]);
 
+  // Demo credentials for easy testing
   const demoCredentials = [
     { role: 'Admin', email: 'admin@osoul.com', password: 'password123' },
     { role: 'Manager', email: 'manager@osoul.com', password: 'password123' },
@@ -80,11 +90,13 @@ export default function Login() {
 
   // Test function to bypass form validation
   const testLogin = async () => {
-    console.log('Test login clicked');
+    console.log('🧪 Test login clicked');
     setIsLoading(true);
     try {
-      const result = await login('admin@osoul.com', 'password123');
-      console.log('Test login result:', result);
+      console.log('🔍 Testing Supabase connection...');
+      const result = await supabaseAuth.login('admin@osoul.com', 'password123');
+      console.log('✅ Test login result:', result);
+      
       if (result.success) {
         toast.success('Test login successful!');
         navigate('/dashboard');
@@ -92,7 +104,7 @@ export default function Login() {
         toast.error('Test login failed: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Test login error:', error);
+      console.error('❌ Test login error:', error);
       toast.error('Test login error: ' + error.message);
     } finally {
       setIsLoading(false);
@@ -101,70 +113,49 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      <div className="login-card animate-fadeIn">
+      <div className="login-card animate-fade-in">
         {/* Header */}
         <div className="login-header">
-          <img 
-            src={osoulLogo} 
-            alt="Osoul Logo" 
+          <img
+            src={osoulLogo}
+            alt="Osoul Logo"
             className="login-logo"
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
           />
-          <div>
-            <h1 className="login-title">الأصول</h1>
-            <p className="login-title arabic-text text-osoul-accent">الحديثة للتمويل</p>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-              Sign in to your account
-            </h2>
-            <p className="login-subtitle">
-              Enter your email and password to access the collection reporting system
-            </p>
-          </div>
+          <h1 className="login-title">الأصول</h1>
+          <h2 className="login-subtitle">الحديثة للتمويل</h2>
+          <p className="login-description">
+            Sign in to your account<br />
+            Enter your email and password to access the collection reporting system
+          </p>
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="login-form" noValidate>
+        <form onSubmit={handleSubmit(onSubmit)} className="login-form">
           <div className="form-group">
-            <Label htmlFor="email" className="form-label">
-              Email
-            </Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               placeholder="admin@osoul.com"
-              className="form-input"
               {...register('email')}
-              disabled={isLoading}
-              autoComplete="email"
-              aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? "email-error" : undefined}
+              className={errors.email ? 'error' : ''}
             />
             {errors.email && (
-              <p id="email-error" className="error-message">{errors.email.message}</p>
+              <span className="error-message">{errors.email.message}</span>
             )}
           </div>
 
           <div className="form-group">
-            <Label htmlFor="password" className="form-label">
-              Password
-            </Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
               placeholder="••••••••"
-              className="form-input"
               {...register('password')}
-              disabled={isLoading}
-              autoComplete="current-password"
-              aria-invalid={!!errors.password}
-              aria-describedby={errors.password ? "password-error" : undefined}
+              className={errors.password ? 'error' : ''}
             />
             {errors.password && (
-              <p id="password-error" className="error-message">{errors.password.message}</p>
+              <span className="error-message">{errors.password.message}</span>
             )}
           </div>
 
@@ -175,53 +166,50 @@ export default function Login() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="loading-spinner mr-2" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Signing in...
               </>
             ) : (
               <>
-                <LogIn className="w-4 h-4 mr-2" />
-                Sign in
+                <LogIn className="mr-2 h-4 w-4" />
+                تسجيل الدخول - Sign in
               </>
             )}
-          </Button>
-          
-          {/* Test button to verify click events */}
-          <Button
-            type="button"
-            onClick={testLogin}
-            className="mt-2 w-full"
-            variant="outline"
-            disabled={isLoading}
-          >
-            Test Direct Login (admin@osoul.com)
           </Button>
         </form>
 
         {/* Demo Credentials */}
         <div className="demo-credentials">
-          <h3 className="demo-title">DEMO CREDENTIALS</h3>
-          <div className="demo-list">
+          <h3>DEMO CREDENTIALS</h3>
+          <div className="credentials-grid">
             {demoCredentials.map((cred, index) => (
-              <div 
-                key={index} 
-                className="demo-item cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-1 rounded transition-colors"
-                onClick={() => fillDemoCredentials(cred.email, cred.password)}
-              >
-                <span className="demo-role">{cred.role}:</span>
-                <span className="demo-credentials-text">
-                  {cred.email} / {cred.password}
-                </span>
+              <div key={index} className="credential-item">
+                <strong>{cred.role}:</strong> {cred.email} / {cred.password}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillDemoCredentials(cred.email, cred.password)}
+                  className="fill-button"
+                >
+                  Fill
+                </Button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            © 2024 Osoul Collection Reporting System. All rights reserved.
-          </p>
+        {/* Test Button for Debugging */}
+        <div className="test-section">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={testLogin}
+            disabled={isLoading}
+            className="test-button"
+          >
+            🧪 Test Supabase Login
+          </Button>
         </div>
       </div>
     </div>
