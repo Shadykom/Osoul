@@ -1,4 +1,5 @@
 import { apiMethods } from './api.js';
+import { collectionReportsService } from './supabaseCollectionService.js';
 
 class CollectionService {
   constructor() {
@@ -272,4 +273,5 @@ class CollectionService {
 const collectionService = new CollectionService();
 
 export default collectionService;
+export { collectionReportsService };
 
