@@ -1,11 +1,14 @@
 // src/App.jsx - FIXED VERSION
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Calendar, TrendingUp, Users, DollarSign, FileText, Building, Activity, Download, Filter, Globe, Target, Award, Clock, ChevronRight, ChevronLeft, Menu, X, Bell, AlertCircle, Shield, BarChart2, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import AuthDebug from './components/AuthDebug';
 
 const OsoulReportingSystem = () => {
   console.log('OsoulReportingSystem component is rendering');
   
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [language, setLanguage] = useState('en');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -529,7 +532,8 @@ const OsoulReportingSystem = () => {
   );
 
   const navigateToCollection = () => {
-    window.location.href = '/collection';
+    console.log('🔄 Navigating to collection section');
+    navigate('/collection');
   };
 
   const Sidebar = () => (
@@ -871,6 +875,9 @@ const OsoulReportingSystem = () => {
           {/* Other tabs content remains the same */}
         </main>
       </div>
+      
+      {/* Debug Panel */}
+      <AuthDebug />
     </div>
   );
 };
