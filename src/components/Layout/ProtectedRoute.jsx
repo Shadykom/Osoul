@@ -7,20 +7,32 @@ export default function ProtectedRoute({ children, roles = [] }) {
   const location = useLocation();
   const { isAuthenticated, user, checkAuth, hasAnyRole } = useAuthStore();
   const [isChecking, setIsChecking] = React.useState(true);
+  const [isHydrated, setIsHydrated] = React.useState(false);
+
+  // Check if store is hydrated
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsHydrated(true);
+    }, 100); // Allow time for store hydration
+    
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
+    
     const verifyAuth = async () => {
       console.log('ProtectedRoute: Starting auth check');
-      await checkAuth();
-      console.log('ProtectedRoute: Auth check complete, isAuthenticated:', isAuthenticated);
+      const authResult = await checkAuth();
+      console.log('ProtectedRoute: Auth check complete, result:', authResult);
       setIsChecking(false);
     };
     verifyAuth();
-  }, [checkAuth]);
+  }, [checkAuth, isHydrated]);
 
-  console.log('ProtectedRoute render:', { isChecking, isAuthenticated, location: location.pathname });
+  console.log('ProtectedRoute render:', { isChecking, isAuthenticated, isHydrated, location: location.pathname });
 
-  if (isChecking) {
+  if (!isHydrated || isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

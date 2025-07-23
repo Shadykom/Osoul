@@ -120,8 +120,9 @@ class AuthService {
   // Get current user
   async getCurrentUser() {
     try {
-      if (!this.isAuthenticated || !this.token) {
-        throw new Error('Not authenticated');
+      const token = this.token || getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
       }
 
       console.log('👤 Fetching current user data');
