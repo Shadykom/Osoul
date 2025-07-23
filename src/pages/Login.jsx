@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Loader2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -255,6 +255,18 @@ export default function Login() {
             >
               🧪 Test Supabase Login
             </Button>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center text-sm text-gray-600">
+            <p>نظام تحصيل الديون - Osoul Collection System</p>
+            <p className="mt-1">© 2024 جميع الحقوق محفوظة</p>
+            <Link 
+              to="/setup-users" 
+              className="mt-2 inline-block text-blue-600 hover:text-blue-700 underline"
+            >
+              Setup Demo Users
+            </Link>
           </div>
         </div>
       </div>
