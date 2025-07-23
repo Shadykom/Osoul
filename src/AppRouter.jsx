@@ -1,6 +1,7 @@
 // src/AppRouter.jsx
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from 'next-themes';
 import Login from './pages/Login';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
 import MainLayout from './components/Layout/MainLayout';
@@ -44,44 +45,46 @@ const TestPage = () => (
 
 const AppRouter = () => {
   return (
-    <Router>
-      <Toaster position="top-right" />
-      <Routes>
-        {/* Test route */}
-        <Route path="/test" element={<TestPage />} />
-        
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<MainLayout />}>
-            {/* Dashboard */}
-            <Route path="/dashboard" element={<App />} />
-            
-            {/* Collection routes */}
-            <Route path="/collection" element={<CollectionLayout />}>
-              <Route index element={<Navigate to="/collection/dashboard" replace />} />
-              <Route path="dashboard" element={<CollectionDashboard />} />
-              <Route path="reports" element={<CollectionReports />} />
-              <Route path="analytics" element={<CollectionAnalytics />} />
-              <Route path="accounts" element={<CollectionAccounts />} />
-              <Route path="activities" element={<CollectionActivities />} />
-              <Route path="legal" element={<CollectionLegalCases />} />
-              <Route path="settings" element={<ComingSoon title="Collection Settings" />} />
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <Router>
+        <Toaster position="top-right" />
+        <Routes>
+          {/* Test route */}
+          <Route path="/test" element={<TestPage />} />
+          
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              {/* Dashboard */}
+              <Route path="/dashboard" element={<App />} />
+              
+              {/* Collection routes */}
+              <Route path="/collection" element={<CollectionLayout />}>
+                <Route index element={<Navigate to="/collection/dashboard" replace />} />
+                <Route path="dashboard" element={<CollectionDashboard />} />
+                <Route path="reports" element={<CollectionReports />} />
+                <Route path="analytics" element={<CollectionAnalytics />} />
+                <Route path="accounts" element={<CollectionAccounts />} />
+                <Route path="activities" element={<CollectionActivities />} />
+                <Route path="legal" element={<CollectionLegalCases />} />
+                <Route path="settings" element={<ComingSoon title="Collection Settings" />} />
+              </Route>
+              
+              {/* Other routes */}
+              <Route path="/reports" element={<ComingSoon title="Reports" />} />
+              <Route path="/analytics" element={<ComingSoon title="Analytics" />} />
+              <Route path="/settings" element={<ComingSoon title="Settings" />} />
             </Route>
-            
-            {/* Other routes */}
-            <Route path="/reports" element={<ComingSoon title="Reports" />} />
-            <Route path="/analytics" element={<ComingSoon title="Analytics" />} />
-            <Route path="/settings" element={<ComingSoon title="Settings" />} />
           </Route>
-        </Route>
-        
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Router>
+          
+          {/* Default redirect */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 };
 
