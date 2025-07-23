@@ -4,15 +4,12 @@ export const supabaseAuth = {
   // Login with email and password
   async login(email, password) {
     try {
-      console.log('🔐 supabaseAuth.login: Attempting login for:', email);
-      
-      // Sign in with Supabase Auth
+      console.log('supabaseAuth.login: Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
-      console.log('🔐 supabaseAuth.login: Auth response:', { data, error });
+      console.log('supabaseAuth.login: Auth response:', { data, error });
 
       if (error) throw error;
 
@@ -23,163 +20,73 @@ export const supabaseAuth = {
         .eq('email', email)
         .single();
 
-      console.log('👤 supabaseAuth.login: Profile response:', { userProfile, profileError });
-
       if (profileError) {
-        console.log('⚠️ Profile error, checking if user exists in auth but not in users table');
-        
+        console.error('Error fetching user profile:', profileError);
         // If profile doesn't exist, create one
         if (profileError.code === 'PGRST116') {
-          console.log('🔧 Creating new user profile...');
           const { data: newProfile, error: createError } = await supabase
             .from('users')
             .insert([
               {
                 id: data.user.id,
-                email: email,
-                role: 'viewer', // Default role
-                first_name: email.split('@')[0],
-                last_name: '',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
+                email: data.user.email,
+                firstName: email.split('@')[0],
+                lastName: '',
+                role: 'viewer',
+                isActive: true,
+                createdAt: new Date().toISOString(),
               }
             ])
             .select()
             .single();
 
-          if (createError) {
-            console.error('❌ Error creating user profile:', createError);
-            throw new Error('Failed to create user profile: ' + createError.message);
-          }
-
-          console.log('✅ New user profile created:', newProfile);
-          return {
-            success: true,
-            user: newProfile,
-            session: data.session,
-            message: 'Login successful - new profile created'
-          };
-        } else {
-          throw new Error('Failed to fetch user profile: ' + profileError.message);
+          if (createError) throw createError;
+          return { user: newProfile, session: data.session };
         }
+        throw profileError;
       }
 
-      console.log('✅ Login successful for user:', userProfile);
-      return {
-        success: true,
-        user: userProfile,
-        session: data.session,
-        message: 'Login successful'
-      };
-
+      return { user: userProfile, session: data.session };
     } catch (error) {
-      console.error('❌ supabaseAuth.login error:', error);
-      
-      // Provide user-friendly error messages
-      let errorMessage = 'Login failed';
-      
-      if (error.message.includes('Invalid login credentials')) {
-        errorMessage = 'Invalid email or password';
-      } else if (error.message.includes('Email not confirmed')) {
-        errorMessage = 'Please confirm your email address';
-      } else if (error.message.includes('Too many requests')) {
-        errorMessage = 'Too many login attempts. Please try again later.';
-      } else if (error.message.includes('Network')) {
-        errorMessage = 'Network error. Please check your connection.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      return {
-        success: false,
-        error: errorMessage,
-        user: null,
-        session: null
-      };
+      console.error('Login error:', error);
+      throw error;
     }
   },
 
   // Logout
   async logout() {
     try {
-      console.log('👋 supabaseAuth.logout: Signing out...');
       const { error } = await supabase.auth.signOut();
-      
       if (error) throw error;
-      
-      console.log('✅ Logout successful');
-      return {
-        success: true,
-        message: 'Logout successful'
-      };
     } catch (error) {
-      console.error('❌ supabaseAuth.logout error:', error);
-      return {
-        success: false,
-        error: error.message
-      };
+      console.error('Logout error:', error);
+      throw error;
     }
   },
 
   // Get current user
   async getCurrentUser() {
     try {
-      console.log('👤 supabaseAuth.getCurrentUser: Getting current user...');
+      const { data: { user }, error } = await supabase.auth.getUser();
       
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) throw sessionError;
-      
-      if (!session) {
-        console.log('ℹ️ No active session found');
-        return {
-          success: false,
-          error: 'No active session',
-          user: null,
-          session: null
-        };
-      }
+      if (error || !user) return null;
 
       // Get user profile
       const { data: userProfile, error: profileError } = await supabase
         .from('users')
         .select('*')
-        .eq('email', session.user.email)
+        .eq('id', user.id)
         .single();
 
       if (profileError) {
-        console.error('❌ Error fetching user profile:', profileError);
-        throw new Error('Failed to fetch user profile: ' + profileError.message);
+        console.error('Error fetching user profile:', profileError);
+        return null;
       }
 
-      console.log('✅ Current user retrieved:', userProfile);
-      return {
-        success: true,
-        user: userProfile,
-        session: session,
-        message: 'User retrieved successfully'
-      };
-
+      return userProfile;
     } catch (error) {
-      console.error('❌ supabaseAuth.getCurrentUser error:', error);
-      return {
-        success: false,
-        error: error.message,
-        user: null,
-        session: null
-      };
-    }
-  },
-
-  // Check if user is authenticated
-  async isAuthenticated() {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      return !!session;
-    } catch (error) {
-      console.error('❌ supabaseAuth.isAuthenticated error:', error);
-      return false;
+      console.error('Get current user error:', error);
+      return null;
     }
   },
 
@@ -190,103 +97,96 @@ export const supabaseAuth = {
       if (error) throw error;
       return session;
     } catch (error) {
-      console.error('❌ supabaseAuth.getSession error:', error);
+      console.error('Get session error:', error);
       return null;
     }
   },
 
-  // Listen to auth changes
+  // Listen to auth state changes
   onAuthStateChange(callback) {
-    return supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔄 Auth state changed:', event, session?.user?.email);
-      callback(event, session);
-    });
+    return supabase.auth.onAuthStateChange(callback);
   },
 
-  // Test connection to Supabase
-  async testConnection() {
+  // Update user profile
+  async updateUserProfile(userId, updates) {
     try {
-      console.log('🔍 Testing Supabase connection...');
-      
-      // Test database connection by querying users table
       const { data, error } = await supabase
         .from('users')
-        .select('count(*)')
-        .limit(1);
+        .update(updates)
+        .eq('id', userId)
+        .select()
+        .single();
 
       if (error) throw error;
-
-      console.log('✅ Supabase connection test successful');
-      return {
-        success: true,
-        message: 'Supabase connection successful',
-        data: data
-      };
+      return data;
     } catch (error) {
-      console.error('❌ Supabase connection test failed:', error);
-      return {
-        success: false,
-        error: error.message
-      };
+      console.error('Update user profile error:', error);
+      throw error;
     }
   },
 
-  // Sign up new user (for future use)
-  async signUp(email, password, userData = {}) {
+  // Create user (for admin)
+  async createUser(userData) {
     try {
-      console.log('📝 supabaseAuth.signUp: Creating new user:', email);
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData
-        }
+      // First create auth user
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: userData.email,
+        password: userData.password,
+        email_confirm: true,
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
-      console.log('✅ Sign up successful:', data);
-      return {
-        success: true,
-        user: data.user,
-        session: data.session,
-        message: 'Sign up successful'
-      };
+      // Then create user profile
+      const { data: userProfile, error: profileError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: authData.user.id,
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            role: userData.role,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+          }
+        ])
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+      return userProfile;
     } catch (error) {
-      console.error('❌ supabaseAuth.signUp error:', error);
-      return {
-        success: false,
-        error: error.message,
-        user: null,
-        session: null
-      };
+      console.error('Create user error:', error);
+      throw error;
     }
   },
 
   // Reset password
   async resetPassword(email) {
     try {
-      console.log('🔄 supabaseAuth.resetPassword: Sending reset email to:', email);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
       if (error) throw error;
-      
-      console.log('✅ Password reset email sent');
-      return {
-        success: true,
-        message: 'Password reset email sent'
-      };
     } catch (error) {
-      console.error('❌ supabaseAuth.resetPassword error:', error);
-      return {
-        success: false,
-        error: error.message
-      };
+      console.error('Reset password error:', error);
+      throw error;
     }
-  }
+  },
+
+  // Update password
+  async updatePassword(newPassword) {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Update password error:', error);
+      throw error;
+    }
+  },
 };
 
 export default supabaseAuth;
-
