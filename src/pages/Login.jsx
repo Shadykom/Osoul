@@ -52,7 +52,9 @@ export default function Login() {
       
       console.log('✅ Supabase login result:', result);
 
-      if (result.success) {
+      // The supabaseAuth.login returns the user object directly on success
+      // and throws an error on failure, so if we reach here, login was successful
+      if (result && result.user) {
         console.log('✅ Login successful, showing toast...');
         toast.success('تم تسجيل الدخول بنجاح', {
           description: 'مرحباً بك',
@@ -61,7 +63,7 @@ export default function Login() {
         console.log('🔄 Navigating to dashboard...');
         navigate('/dashboard');
       } else {
-        throw new Error(result.error || 'Login failed');
+        throw new Error('Login failed - no user data returned');
       }
     } catch (error) {
       console.error('❌ Login error:', error);
