@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute({ children, roles = [] }) {
   const location = useLocation();
-  const { isAuthenticated, user, checkAuth, hasAnyRole } = useAuthStore();
+  const { isAuthenticated, user, initializeAuth, hasAnyRole } = useAuthStore();
   const [isChecking, setIsChecking] = React.useState(true);
   const [isHydrated, setIsHydrated] = React.useState(false);
 
@@ -23,12 +23,12 @@ export default function ProtectedRoute({ children, roles = [] }) {
     
     const verifyAuth = async () => {
       console.log('ProtectedRoute: Starting auth check');
-      const authResult = await checkAuth();
+      const authResult = await initializeAuth();
       console.log('ProtectedRoute: Auth check complete, result:', authResult);
       setIsChecking(false);
     };
     verifyAuth();
-  }, [checkAuth, isHydrated]);
+  }, [initializeAuth, isHydrated]);
 
   console.log('ProtectedRoute render:', { isChecking, isAuthenticated, isHydrated, location: location.pathname });
 
@@ -45,7 +45,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (roles.length > 0 && !hasAnyRole(...roles)) {
+  if (roles.length > 0 && !hasAnyRole(roles)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
