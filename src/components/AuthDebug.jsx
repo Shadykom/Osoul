@@ -4,7 +4,7 @@ import authService from '../services/auth.service';
 import { getToken } from '../services/api';
 
 const AuthDebug = () => {
-  const { isAuthenticated, user, token, checkAuth } = useAuthStore();
+  const { isAuthenticated, user, token, initializeAuth } = useAuthStore();
   const [debugInfo, setDebugInfo] = useState({});
   
   useEffect(() => {
@@ -41,7 +41,7 @@ const AuthDebug = () => {
 
   const handleCheckAuth = async () => {
     console.log('🔍 Manual auth check triggered');
-    const result = await checkAuth();
+    const result = await initializeAuth();
     console.log('🔍 Manual auth check result:', result);
   };
 
