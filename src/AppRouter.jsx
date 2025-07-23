@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
 import MainLayout from './components/Layout/MainLayout';
 import App from './App';
+import { Toaster } from './components/ui/sonner';
 
 // Collection pages
 import CollectionLayout from './pages/Collection';
@@ -44,6 +45,7 @@ const TestPage = () => (
 const AppRouter = () => {
   return (
     <Router>
+      <Toaster position="top-right" />
       <Routes>
         {/* Test route */}
         <Route path="/test" element={<TestPage />} />
