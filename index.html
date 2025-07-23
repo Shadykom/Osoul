@@ -6,23 +6,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Osoul Modern Reporting System - Islamic Finance Analytics</title>
     <script>
-      // Handle ethereum provider conflicts from browser extensions
-      if (window.ethereum) {
-        console.log('Ethereum provider already exists, preserving it');
-      }
-      // Prevent errors from multiple wallet extensions trying to inject
-      Object.defineProperty(window, 'ethereum', {
-        configurable: true,
-        enumerable: true,
-        get() {
-          return window._ethereum;
-        },
-        set(val) {
-          if (!window._ethereum) {
-            window._ethereum = val;
+      // Comprehensive Ethereum provider conflict resolution
+      (function() {
+        // Store the first ethereum provider that gets injected
+        let ethereumProvider = null;
+        
+        // Create a proxy to handle multiple wallet extensions
+        const handler = {
+          get(target, prop) {
+            if (prop === 'isMetaMask' || prop === 'isConnected' || prop === 'selectedAddress') {
+              return ethereumProvider ? ethereumProvider[prop] : undefined;
+            }
+            return ethereumProvider ? ethereumProvider[prop] : undefined;
+          },
+          set(target, prop, value) {
+            if (ethereumProvider) {
+              ethereumProvider[prop] = value;
+            }
+            return true;
           }
-        }
-      });
+        };
+        
+        // Define ethereum property with proper error handling
+        Object.defineProperty(window, 'ethereum', {
+          configurable: false,
+          enumerable: true,
+          get() {
+            return ethereumProvider ? new Proxy({}, handler) : undefined;
+          },
+          set(provider) {
+            if (!ethereumProvider && provider) {
+              console.log('Setting ethereum provider:', provider.isMetaMask ? 'MetaMask' : 'Other wallet');
+              ethereumProvider = provider;
+            } else {
+              console.warn('Ethereum provider already set, ignoring:', provider);
+            }
+          }
+        });
+        
+        // Prevent redefinition errors
+        const originalDefineProperty = Object.defineProperty;
+        Object.defineProperty = function(obj, prop, descriptor) {
+          if (obj === window && prop === 'ethereum') {
+            console.warn('Prevented ethereum property redefinition');
+            return obj;
+          }
+          return originalDefineProperty.call(this, obj, prop, descriptor);
+        };
+      })();
     </script>
   </head>
   <body>
